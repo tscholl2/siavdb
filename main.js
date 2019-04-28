@@ -3,26 +3,46 @@ import { nextSIEC } from "./ec.js";
 
 const SIAVLIST = [];
 
-loadData()
-  .then(() => console.log("loaded"))
+fetchData()
+  .then(() => {
+    const event = document.createEvent("Event");
+    event.initEvent("dataavailable", true, true);
+    event.eventName = "dataavailable";
+    document.dispatchEvent(event);
+  })
   .catch(e => console.error(e));
 
-async function loadData() {
+document.addEventListener("dataavailable", () => {
+  const div = document.getElementById("output");
+  const ul = document.createElement("ul");
+  let i = 0;
+  for (let entry of filterNone()) {
+    i++;
+    if (i > 10) {
+      break;
+    }
+    const li = document.createElement("li");
+    //entry = JSON.parse(JSON.stringify(entry));
+    //entry.id = entry.id.substr(0, 6);
+    li.innerText = JSON.stringify(entry);
+    ul.append(li);
+  }
+  div.innerHTML = "";
+  div.append(ul);
+});
+
+async function fetchData() {
+  await new Promise(resolve => setTimeout(resolve, 1000));
   const response = await fetch("siav-dev.json");
   const data = await response.json();
   for (let d of data) {
-    d.id = await sha256(d["f"].join(","));
+    d.id = await sha256(d.f.join(","));
+    console.log(d);
     SIAVLIST.push(d);
   }
-  const table = document.getElementById("data-table");
-  for (let entry of data) {
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.innerText = JSON.stringify(entry);
-    tr.append(td);
-    table.append(tr);
-  }
 }
+
+window.foo = newCurveIterator();
 
 function* newCurveIterator(startq = 0n) {
   let index = 0;
@@ -35,7 +55,7 @@ function* newCurveIterator(startq = 0n) {
     index++;
   }
   while (true) {
-    const [v1, v2] = nextSIEC(prev === undefined ? startq : BigInt(prev.q));
+    const [v1, v2] = await nextSIEC(prev === undefined ? startq : BigInt(prev.q));
     yield v1;
     yield v2;
     prev = v2;
@@ -48,26 +68,27 @@ function* filterNone() {
   const iterators = new Array(m);
   iterators[0] = curveItr;
   for (let i = 1; i < m; i++) {
-    iterators[i] = filter({ q: 0, g: `${i + 1}` });
+    iterators[i] = filterSome({ q: 0, g: `${i + 1}` });
   }
-  siavs = iterators.map(itr => itr.next());
+  const siavs = iterators.map(itr => itr.next().value);
   while (true) {
     // Return siav with smallest "q" value.
     let v = siavs[0];
     let i = 0;
     for (let j = 1; j <= m; j++) {
       if (siavs[j] != null && BigInt(siavs[j].q) < BigInt(v.q)) {
-        v = siaves[j];
+        v = siavs[j];
         i = j;
       }
     }
     yield v;
     // Replace the one we found
-    const val = iterators[i].next();
-    if (val.done) {
-      siavs[i] = val.value;
-    } else {
+    const g = iterators[i].next();
+    if (g.done) {
       siavs[i] = undefined;
+      iterators[i] = undefined;
+    } else {
+      siavs[i] = g.value;
     }
   }
 }

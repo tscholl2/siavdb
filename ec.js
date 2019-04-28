@@ -7,7 +7,7 @@ import { BigIntMath } from "./math.js";
  * @param {BigInt} M
  * @returns {Object}
  */
-export function nextSIEC(M) {
+export async function nextSIEC(M) {
   if (typeof M !== "bigint") {
     throw Error("expected bigint got", typeof M);
   }
@@ -35,6 +35,7 @@ export function nextSIEC(M) {
             NP: [[0, 1], [1, 0], [2, 0]],
             PP: true,
             f: [`${q}`, `${t}`, "1"],
+            id: await sha256([`${q}`, `${t}`, "1"].join(",")),
             g: "1",
             p: `${p}`,
             q: `${q}`
@@ -46,6 +47,7 @@ export function nextSIEC(M) {
             NP: [[0, 1], [1, 0], [2, 0]],
             PP: true,
             f: [`${q}`, `${-t}`, "1"],
+            id: await sha256([`${q}`, `${-t}`, "1"].join(",")),
             g: "1",
             p: `${p}`,
             q: `${q}`

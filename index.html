@@ -15,30 +15,26 @@
     <h1>Super-Isolated Abelian Varieties</h1>
     <div>
       Search:
-      <form>
-        <input type="text" placeholder="p =" />
+      <form id="search-parameters">
+        <label
+          >q:
+          <input type="text" />
+        </label>
         <br />
-        <input type="text" placeholder="q =" />
-        <br />
-        <input type="text" placeholder="f =" />
-        <br />
-        <input type="text" placeholder="Disc(K) =" />
-        <br />
-        <input type="text" placeholder="g =" />
-        <br />
-        <input type="text" placeholder="rk A[p] =" />
-        <br />
-        <input type="text" placeholder="PP? = " />
+        <label>
+          g:
+          <select>
+            <option value=""></option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
         <br />
       </form>
     </div>
-    <table id="data-table">
-      <th>Characteristic Polynomial of Frobenius</th>
-    </table>
-    <div
-      id="app"
-      style="width:200px;height:200px;border:2px solid black;"
-    ></div>
+    <div id="output"><progress/></div>
   </body>
   <script src="main.js" type="module"></script>
 </html>
