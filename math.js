@@ -1,6 +1,6 @@
 // https://golb.hplar.ch/2018/09/javascript-bigint.html
 // + a few more methods
-class BigIntMath {
+export class BigIntMath {
   static isPerfectPower(n) {
     let max = BigInt(BigIntMath.bitLength(n));
     for (let b = max; b >= 1n; b--) {
@@ -101,5 +101,10 @@ class BigIntMath {
     }
 
     return newtonIteration(value, 1n);
+  }
+
+  // https://peterolson.github.io/BigInteger.js/BigInteger.min.js
+  static isProbablePrime(n, iterations = 20) {
+    return bigInt(n).isProbablePrime(Number(iterations));
   }
 }

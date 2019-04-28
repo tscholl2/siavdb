@@ -1,18 +1,9 @@
-let SIAVLIST = [];
+import { sha256 } from "./sha256.js";
+import { nextSIEC } from "./ec.js";
 
-async function sha256(message) {
-  // encode as UTF-8
-  const msgBuffer = new TextEncoder("utf-8").encode(message);
-  // hash the message
-  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
-  // convert ArrayBuffer to Array
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  // convert bytes to hex string
-  const hashHex = hashArray
-    .map(b => ("00" + b.toString(16)).slice(-2))
-    .join("");
-  return hashHex;
-}
+console.log(window.nextSIEC = nextSIEC)
+
+let SIAVLIST = [];
 
 async function loadData() {
   const response = await fetch("siav.json");
@@ -30,4 +21,10 @@ async function loadData() {
   }
 }
 
-loadData().then(() => console.log("loaded")).catch(e => console.error(e));
+loadData()
+  .then(() => console.log("loaded"))
+  .catch(e => console.error(e));
+
+function filter(conditions) {
+  ???
+}
