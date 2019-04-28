@@ -12,18 +12,18 @@ fetchData()
   })
   .catch(e => console.error(e));
 
-document.addEventListener("dataavailable", () => {
+document.addEventListener("dataavailable", async () => {
   const div = document.getElementById("output");
   const ul = document.createElement("ul");
   let i = 0;
-  for (let entry of filterNone()) {
+  for await (let entry of filterNone()) {
     i++;
     if (i > 10) {
       break;
     }
     const li = document.createElement("li");
-    //entry = JSON.parse(JSON.stringify(entry));
-    //entry.id = entry.id.substr(0, 6);
+    entry = JSON.parse(JSON.stringify(entry));
+    entry.id = entry.id.substr(0, 6);
     li.innerText = JSON.stringify(entry);
     ul.append(li);
   }
@@ -37,14 +37,11 @@ async function fetchData() {
   const data = await response.json();
   for (let d of data) {
     d.id = await sha256(d.f.join(","));
-    console.log(d);
     SIAVLIST.push(d);
   }
 }
 
-window.foo = newCurveIterator();
-
-function* newCurveIterator(startq = 0n) {
+async function* newCurveIterator(startq = 0n) {
   let index = 0;
   let prev = undefined;
   while (index < SIAVLIST.length) {
@@ -55,35 +52,44 @@ function* newCurveIterator(startq = 0n) {
     index++;
   }
   while (true) {
-    const [v1, v2] = await nextSIEC(prev === undefined ? startq : BigInt(prev.q));
+    const [v1, v2] = nextSIEC(prev === undefined ? startq : BigInt(prev.q));
+    v1.id = await sha256(v1.f.join(","));
+    v2.id = await sha256(v2.f.join(","));
     yield v1;
     yield v2;
     prev = v2;
   }
 }
 
-function* filterNone() {
-  const curveItr = newCurveIterator();
+async function* filterNone() {
   const m = Math.max(...SIAVLIST.map(v => parseInt(v.g)));
   const iterators = new Array(m);
-  iterators[0] = curveItr;
-  for (let i = 1; i < m; i++) {
-    iterators[i] = filterSome({ q: 0, g: `${i + 1}` });
+  const siavs = new Array(m);
+  for (let i = 0; i < m; i++) {
+    iterators[i] =
+      i === 0 ? newCurveIterator() : filterSome({ q: "0", g: `${i + 1}` });
+    const val = await iterators[i].next();
+    siavs[i] = val.done ? undefined : val.value;
   }
-  const siavs = iterators.map(itr => itr.next().value);
   while (true) {
     // Return siav with smallest "q" value.
     let v = siavs[0];
     let i = 0;
     for (let j = 1; j <= m; j++) {
-      if (siavs[j] != null && BigInt(siavs[j].q) < BigInt(v.q)) {
+      if (siavs[j] == null) {
+        continue;
+      }
+      if (v == null) {
+        v = siavs[j];
+        i = j;
+      } else if (BigInt(siavs[j].q) < BigInt(v.q)) {
         v = siavs[j];
         i = j;
       }
     }
     yield v;
     // Replace the one we found
-    const g = iterators[i].next();
+    const g = await iterators[i].next();
     if (g.done) {
       siavs[i] = undefined;
       iterators[i] = undefined;
@@ -93,7 +99,7 @@ function* filterNone() {
   }
 }
 
-function* filterSome(conditions = {}) {
+async function* filterSome(conditions = {}) {
   const { g = "", q = "" } = conditions;
   if (!/\d+/.test(g)) {
     throw new Error("unknown value for 'g'");
