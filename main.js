@@ -24,6 +24,11 @@ async function updateOutput(filter) {
       li.innerText = JSON.stringify(entry);
       ul.append(li);
     }
+    if (i === 0) {
+      const li = document.createElement("li");
+      li.innerText = "no results found";
+      ul.append(li);
+    }
     div.innerHTML = "";
     div.append(ul);
   } catch (e) {
