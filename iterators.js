@@ -20,7 +20,7 @@ export async function* newIterator(filter = {}) {
   const data = await loadData();
   const { g = "", q = ">0" } = filter;
   if (g !== "") {
-    yield* iterateByDimension(g);
+    yield* iterateByDimension(filter);
     return;
   }
   const m = Math.max(...data.map(v => parseInt(v.g)));
@@ -59,8 +59,8 @@ export async function* newIterator(filter = {}) {
   }
 }
 
-async function* iterateByDimension(conditions = {}) {
-  const { g = "", q = ">0" } = conditions;
+async function* iterateByDimension(filter = {}) {
+  const { g = "", q = ">0" } = filter;
   if (!/\d+/.test(g)) {
     throw new Error("unknown value for 'g'");
   }
