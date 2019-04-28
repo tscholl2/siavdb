@@ -3,27 +3,31 @@ import { nextSIEC } from "./ec.js";
 
 const SIAVLIST = [];
 
-fetchData()
-  .then(() => {
-    const event = document.createEvent("Event");
-    event.initEvent("dataavailable", true, true);
-    event.eventName = "dataavailable";
-    document.dispatchEvent(event);
-  })
-  .catch(e => console.error(e));
+// load data
+(async () => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const response = await fetch("siav-dev.json");
+  const data = await response.json();
+  for (let d of data) {
+    d.id = await sha256(d.f.join(","));
+    SIAVLIST.push(d);
+  }
+  const event = document.createEvent("Event");
+  event.initEvent("dataavailable", true, true);
+  event.eventName = "dataavailable";
+  document.dispatchEvent(event);
+})();
 
 document.addEventListener("dataavailable", async () => {
   const div = document.getElementById("output");
   const ul = document.createElement("ul");
   let i = 0;
-  for await (let entry of filterNone()) {
+  for await (let entry of iterateOverAll()) {
     i++;
     if (i > 10) {
       break;
     }
     const li = document.createElement("li");
-    entry = JSON.parse(JSON.stringify(entry));
-    entry.id = entry.id.substr(0, 6);
     li.innerText = JSON.stringify(entry);
     ul.append(li);
   }
@@ -36,43 +40,12 @@ document.addEventListener("dataavailable", async () => {
   */
 });
 
-async function fetchData() {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  const response = await fetch("siav-dev.json");
-  const data = await response.json();
-  for (let d of data) {
-    d.id = await sha256(d.f.join(","));
-    SIAVLIST.push(d);
-  }
-}
-
-async function* newCurveIterator(startq = 0n) {
-  let index = 0;
-  let prev = undefined;
-  while (index < SIAVLIST.length) {
-    prev = SIAVLIST[index];
-    if (prev.g === "1" && BigInt(prev.q) >= startq) {
-      yield prev;
-    }
-    index++;
-  }
-  while (true) {
-    const [v1, v2] = nextSIEC(prev === undefined ? startq : BigInt(prev.q));
-    v1.id = await sha256(v1.f.join(","));
-    v2.id = await sha256(v2.f.join(","));
-    yield v1;
-    yield v2;
-    prev = v2;
-  }
-}
-
-async function* filterNone() {
+async function* iterateOverAll() {
   const m = Math.max(...SIAVLIST.map(v => parseInt(v.g)));
   const iterators = new Array(m);
   const siavs = new Array(m);
   for (let i = 0; i < m; i++) {
-    iterators[i] =
-      i === 0 ? newCurveIterator() : filterSome({ q: "0", g: `${i + 1}` });
+    iterators[i] = iterateByDimension({ g: `${i + 1}` });
     const val = await iterators[i].next();
     siavs[i] = val.done ? undefined : val.value;
   }
@@ -104,8 +77,8 @@ async function* filterNone() {
   }
 }
 
-async function* filterSome(conditions = {}) {
-  const { g = "", q = "" } = conditions;
+async function* iterateByDimension(conditions = {}) {
+  const { g = "", q = ">0" } = conditions;
   if (!/\d+/.test(g)) {
     throw new Error("unknown value for 'g'");
   }
@@ -114,19 +87,42 @@ async function* filterSome(conditions = {}) {
   }
   const [_, cmp, val] = /(\<|\>)?\s*(\d+)/.exec(q);
   if (g === "1") {
-    return newCurveIterator(BigInt(val));
+    yield* newCurveIterator(BigInt(val));
+    return;
   }
-  const data = SIAVLIST.filter(v => v.g === g);
-  for (let v of data) {
-    if (q !== "") {
-      if (cmp === ">" && BigInt(v.q) <= BigInt(val)) {
-        continue;
-      }
-      if (cmp === "<" && BigInt(v.q) >= BigInt(val)) {
-        return;
-      }
-    }
+  let arr = SIAVLIST.filter(
+    v =>
+      v.g === g &&
+      ((cmp === ">" && BigInt(v.q) > val) || (cmp === "<" && BigInt(v.q) < q))
+  );
+  arr = arr.sort((a, b) => {
+    a = BigInt(a.q);
+    b = BigInt(b.q);
+    return a > b ? 1 : a < b ? -1 : 0;
+  });
+  for (let v of arr) {
     yield v;
   }
-  return;
+}
+
+async function* newCurveIterator(startq = 0n) {
+  const arr = SIAVLIST.filter(v => v.g === "1" && BigInt(v.q) >= startq).sort(
+    (a, b) => {
+      a = BigInt(a.q);
+      b = BigInt(b.q);
+      return a > b ? 1 : a < b ? -1 : 0;
+    }
+  );
+  let prev = undefined;
+  for (let v of arr) {
+    yield (prev = v);
+  }
+  while (true) {
+    const [v1, v2] = nextSIEC(prev === undefined ? startq : BigInt(prev.q));
+    v1.id = await sha256(v1.f.join(","));
+    v2.id = await sha256(v2.f.join(","));
+    yield v1;
+    yield v2;
+    prev = v2;
+  }
 }
