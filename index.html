@@ -18,7 +18,12 @@
       <form id="search-parameters">
         <label
           >q:
-          <input type="text" />
+          <select name="q-cmp">
+              <option value=""></option>
+              <option value="&#62;">&#62;</option>
+              <option value="&#60;">&#60;</option>
+            </select>
+          <input name="q-val" type="text" />
         </label>
         <br />
         <label>

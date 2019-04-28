@@ -29,6 +29,11 @@ document.addEventListener("dataavailable", async () => {
   }
   div.innerHTML = "";
   div.append(ul);
+  /*
+  const more = document.createElement("button");
+  more.innerText = "more";
+  div.append(more);
+  */
 });
 
 async function fetchData() {
