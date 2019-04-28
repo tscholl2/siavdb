@@ -12,7 +12,6 @@ export function nextSIEC(M) {
     throw Error("expected bigint got", typeof M);
   }
   if (M < 1621n) {
-    // GOTO TABLE
     throw Error("unimplemented for small M");
   }
   let t = BigIntMath.sqrt(4n * M - 163n);
@@ -27,29 +26,33 @@ export function nextSIEC(M) {
       }
       q = q >> 2n;
       const [p, _] = BigIntMath.isPerfectPower(q);
-      if (q >= M && BigIntMath.isProbablePrime(p,20n)) {
+      if (q > M && BigIntMath.isProbablePrime(p, 20n)) {
         return [
-          `x^2 - ${t.toString()}x + ${q.toString()}`,
-          `x^2 + ${t.toString()}x + ${q.toString()}`
+          {
+            Ap: "1",
+            D: `${-d}`,
+            N: `${q + 1n - t}`,
+            NP: [[0, 1], [1, 0], [2, 0]],
+            PP: true,
+            f: [`${q}`, `${t}`, "1"],
+            g: "1",
+            p: `${p}`,
+            q: `${q}`
+          },
+          {
+            Ap: "1",
+            D: `${-d}`,
+            N: `${q + 1n + t}`,
+            NP: [[0, 1], [1, 0], [2, 0]],
+            PP: true,
+            f: [`${q}`, `${-t}`, "1"],
+            g: "1",
+            p: `${p}`,
+            q: `${q}`
+          }
         ];
       }
     }
     t++;
   }
-  /*
-def next_ord_siec(M):
-    R.<x> = ZZ[]
-    t = ceil(sqrt(4*M-163))
-    while True:
-        print t
-        for d in [3,4,7,8,11,19,43,67,163]:
-            q = (t^2+d)/4
-            if q >= M and q in ZZ and ZZ(q).is_pseudoprime_power():
-                return [R(x^2 - t*x + q), R(x^2 + t*x + q)]
-        t = t + 1
-# Samples
-1621, x^2 - 81*x + 1657
-1773, x^2 - 85*x + 1811
-1267650600228229401496703205376, x^2 - 2251799813685253*x + 1267650600228235030996237418507
-    */
 }
