@@ -47,6 +47,10 @@ export async function* newIterator(filter = {}) {
         i = j;
       }
     }
+    // If we never found anything, then we're done
+    if (v == null) {
+      return;
+    }
     yield v;
     // Replace the one we found
     const g = await iterators[i].next();
@@ -69,14 +73,23 @@ async function* iterateByDimension(filter = {}) {
   }
   const [_, cmp, val] = /(\<|\>)?\s*(\d+)/.exec(q);
   if (g === "1") {
-    yield* newCurveIterator(BigInt(val));
+    const itr = newCurveIterator(cmp === ">" ? BigInt(val) : 0n);
+    let v = await itr.next();
+    while (!v.done) {
+      if (cmp === "<" && BigInt(v.value.q) >= BigInt(val)) {
+        return;
+      }
+      yield v.value;
+      v = await itr.next();
+    }
     return;
   }
   const data = await loadData();
-  let arr = data.filter(
+  let arr = data.filter( 
     v =>
       v.g === g &&
-      ((cmp === ">" && BigInt(v.q) > val) || (cmp === "<" && BigInt(v.q) < q))
+      ((cmp === ">" && BigInt(v.q) > BigInt(val)) ||
+        (cmp === "<" && BigInt(v.q) < BigInt(val)))
   );
   arr = arr.sort(compareEntries);
   for (let v of arr) {
