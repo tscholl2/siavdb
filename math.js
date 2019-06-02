@@ -66,21 +66,65 @@ export class BigIntMath {
   }
 
   /**
+   * Returns absolute value of n
+   * @param {bigint} n
+   * @returns {bigint} 
+   */
+  static abs(n) {
+    if (n < 0n) {
+      return -n
+    }
+    return n;
+  }
+
+  /**
    * Returns the gcd of the given numbers.
    * @param  {...bigint} values
    * @returns {bigint} 
+   * http://rosettacode.org/wiki/Greatest_common_divisor#JavaScript
    */
   static gcd(...values) {
-    return values.reduce((p, c) => egcd(p, c), 0n);
-    function egcd(a, b) {
-      if (a === 0n) return b;
-      while (b !== 0n) {
-        if (a > b)
-          a = a - b;
-        else
-          b = b - a;
+    values = values.map(a => BigIntMath.abs(a));
+    let x = values[0];
+    for (let i = 1; i < values.length; i++) {
+      let y = values[i];
+      while (x && y) {
+        (x > y) ? x %= y : y %= x;
       }
-      return a;
+      x += y;
+    }
+    return x;
+  }
+
+  /**
+   * Given integers a1,...,an, this returns the
+   * gcd d of ai, as well as a set of integers ci
+   * such that sum ci*ai = d. 
+   * @param  {...bigint} values
+   * @returns {[bigint,bigint[]]} 
+   */
+  static xgcd(...values) {
+    const signs = values.map(a => BigIntMath.sign(a))
+    values = values.map(a => BigIntMath.abs(a));
+    let d = values[0];
+    const ci = [signs[0]];
+    for (let i = 1; i < values.length; i++) {
+      const a = values[i];
+      const [d1, s1, t1] = triple(d, a);
+      d = d1
+      for (let j = 0; j < ci.length; j++) {
+        ci[j] *= s1;
+      }
+      ci.push(t1 * signs[i]);
+    }
+    return [d, ci];
+    function triple(a, b) {
+      if (b === 0n) {
+        return [a, 1n, 0n]
+      } else {
+        const [d, s, t] = triple(b, a % b)
+        return [d, t, s - (a / b) * t]
+      }
     }
   }
 
@@ -116,40 +160,49 @@ export class BigIntMath {
     return p;
   }
 
+  /**
+   * Retruns the lcm of the values.
+   * @param  {...bigint} values
+   * @returns {bigint} 
+   */
   static lcm(...values) {
-    return BigIntMath.prod(...values) / BigIntMath.gcd(...values)
+    let x = values[0];
+    for (let i = 1; i < values.length; i++) {
+      let y = values[i];
+      x *= y / BigIntMath.gcd(x, y)
+    }
+    return x;
   }
 
-  static sign(value) {
-    if (value > 0n) {
+  static sign(n) {
+    if (n > 0n) {
       return 1n;
     }
-    if (value < 0n) {
+    if (n < 0n) {
       return -1n;
     }
     return 0n;
   }
 
-  static abs(value) {
-    if (this.sign(value) === -1n) {
-      return -value;
+  static abs(n) {
+    if (this.sign(n) === -1n) {
+      return -n;
     }
+    return n;
   }
 
   /**
    * Given integer n, returns floor(sqrt(n)).
-   * @param {bigint} value
+   * @param {bigint} n
    * @returns {bigint} 
    */
-  static sqrt(value) {
-    if (value < 0n) {
+  static sqrt(n) {
+    if (n < 0n) {
       throw "square root of negative numbers is not supported";
     }
-
-    if (value < 2n) {
-      return value;
+    if (n < 2n) {
+      return n;
     }
-
     function newtonIteration(n, x0) {
       const x1 = (n / x0 + x0) >> 1n;
       if (x0 === x1 || x0 === x1 - 1n) {
@@ -157,8 +210,7 @@ export class BigIntMath {
       }
       return newtonIteration(n, x1);
     }
-
-    return newtonIteration(value, 1n);
+    return newtonIteration(n, 1n);
   }
 
   /**
@@ -172,15 +224,12 @@ export class BigIntMath {
     if (k < 0n) {
       throw new Error(`expected non-negative exponent, got ${k}`);
     }
-
     if (n === 0n) {
       return a ** k;
     }
-
     if (n === 1n || a === 0n) {
       return 0n;
     }
-
     let result = 1n;
     while (k > 0) {
       if (k % 2n === 1n) {
@@ -234,11 +283,9 @@ export class BigIntMath {
     if ([2n, 3n, 5n, 7n, 11n, 13n, 17n, 19n, 23n, 29n, 31n, 37n].includes(n)) {
       return true;
     }
-
     if (n < 40n) {
       return false;
     }
-
     // Write n-1 = 2^r * d
     let r = 0n;
     let d = n - 1n;
@@ -246,7 +293,6 @@ export class BigIntMath {
       d /= 2n;
       r++;
     }
-
     // https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test#Miller%E2%80%93Rabin_test
     witnessLoop: do {
       const a = BigIntMath.random(n - 4n) + 2n;

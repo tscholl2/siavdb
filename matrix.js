@@ -29,6 +29,10 @@ export class MatrixMath {
     return C;
   }
 
+  static sub(A, B) {
+    return MatrixMath.add(A, MatrixMath.scale(B, -1n));
+  }
+
   static scale(A, k) {
     const n = A.length;
     const B = MatrixMath.zero(n);
@@ -38,10 +42,6 @@ export class MatrixMath {
       }
     }
     return B;
-  }
-
-  static sub(A, B) {
-    return MatrixMath.add(A, MatrixMath.scale(B, -1n));
   }
 
   static mul(A, B) {
@@ -99,11 +99,7 @@ export class MatrixMath {
     const n = A.length;
     const d = MatrixMath.det(A);
     if (d !== 1n && d !== -1n) {
-      throw new Error(
-        `expected matrix in GL_n(Z), got ${MatrixMath.toString(
-          A
-        )} (with det ${d})`
-      );
+      throw new Error(`expected matrix in GLn(Z)`);
     }
     let B = MatrixMath.cofactor(A);
     B = MatrixMath.scale(B, d);
