@@ -1,6 +1,12 @@
 // https://golb.hplar.ch/2018/09/javascript-bigint.html
 // + a few more methods
 export class BigIntMath {
+  /**
+   * Given n, returns a,b such that n = a^b
+   * if such a,b exist. Otherwise returns undefined.
+   * @param {biging} n
+   * @returns {bigint[] | undefined} 
+   */
   static isPerfectPower(n) {
     let max = BigInt(BigIntMath.bitLength(n));
     for (let b = max; b >= 1n; b--) {
@@ -20,6 +26,7 @@ export class BigIntMath {
         }
       }
     }
+    return undefined;
   }
 
   static bitLength(n) {
@@ -31,15 +38,15 @@ export class BigIntMath {
     return i;
   }
 
+  /**
+   * Returns the maximum integer.
+   * @param  {...bigint}
+   * @returns {bigint} 
+   */
   static max(...values) {
     if (values.length === 0) {
       return null;
     }
-
-    if (values.length === 1) {
-      return values[0];
-    }
-
     let max = values[0];
     for (let i = 1; i < values.length; i++) {
       if (values[i] > max) {
@@ -49,22 +56,68 @@ export class BigIntMath {
     return max;
   }
 
+  /**
+   * Returns the minimum integer.
+   * @param  {...bigint} values 
+   * @returns {bigint}
+   */
   static min(...values) {
-    if (values.length === 0) {
-      return null;
-    }
+    return -BigIntMath.max(values.map(a => -a));
+  }
 
-    if (values.length === 1) {
-      return values[0];
-    }
-
-    let min = values[0];
-    for (let i = 1; i < values.length; i++) {
-      if (values[i] < min) {
-        min = values[i];
+  /**
+   * Returns the gcd of the given numbers.
+   * @param  {...bigint} values
+   * @returns {bigint} 
+   */
+  static gcd(...values) {
+    return values.reduce((p, c) => egcd(p, c), 0n);
+    function egcd(a, b) {
+      if (a === 0n) return b;
+      while (b !== 0n) {
+        if (a > b)
+          a = a - b;
+        else
+          b = b - a;
       }
+      return a;
     }
-    return min;
+  }
+
+  /**
+   * Returns the product of the values.
+   * @param  {...bigint} values
+   * @returns {bigint} 
+   */
+  static prod(...values) {
+    if (values.length === 0) {
+      return 1n;
+    }
+    let p = values[0];
+    for (let i = 1; i < values.length; i++) {
+      p *= values[i];
+    }
+    return p;
+  }
+
+  /**
+   * Returns the sum of the values.
+   * @param  {...bigint} values
+   * @returns {bigint} 
+   */
+  static sum(...values) {
+    if (values.length === 0) {
+      return 0n;
+    }
+    let p = values[0];
+    for (let i = 1; i < values.length; i++) {
+      p += values[i];
+    }
+    return p;
+  }
+
+  static lcm(...values) {
+    return BigIntMath.prod(...values) / BigIntMath.gcd(...values)
   }
 
   static sign(value) {
@@ -83,6 +136,11 @@ export class BigIntMath {
     }
   }
 
+  /**
+   * Given integer n, returns floor(sqrt(n)).
+   * @param {bigint} value
+   * @returns {bigint} 
+   */
   static sqrt(value) {
     if (value < 0n) {
       throw "square root of negative numbers is not supported";
@@ -156,15 +214,20 @@ export class BigIntMath {
    */
   static random(n) {
     let result = 0n;
-    const n1 = n;
-    while (n > 0n) {
+    for (let i = BigInt.bitLength(n); i--; i >= 0) {
       result += Math.random() > 0.5 ? 1n : 0n;
       result <<= 1n;
       n >>= 1n;
     }
-    return result % n1;
+    return result % n;
   }
 
+  /**
+   * Returns true if n passes the Miller-Rabin primality test.
+   * @param {bigint} n 
+   * @param {number} iterations
+   * @returns {boolean} 
+   */
   static isProbablePrime(n, iterations = 20) {
     // TODO: this is really slow when n is composite
     // Small cases
