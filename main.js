@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.preventDefault();
     updateOutput(readSearchParametersFromForm());
   };
-  updateOutput();
+  //updateOutput();
 });
 
 let VIEWING_DATA = [];

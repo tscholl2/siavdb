@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="//cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
     <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/milligram/1.3.0/milligram.min.css">
     -->
-    <script src="https://peterolson.github.io/BigInteger.js/BigInteger.min.js"></script>
   </head>
   <body>
     <h1>Super-Isolated Abelian Varieties</h1>
@@ -18,22 +17,7 @@
       <form id="search-parameters">
         <label
           >q:
-          <select id="q-cmp">
-              <option selected value="&#62;">&#62;</option>
-              <option value="&#60;">&#60;</option>
-            </select>
           <input id="q-val" type="text" />
-        </label>
-        <br />
-        <label>
-          g:
-          <select id="g-val">
-            <option value=""></option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
         </label>
         <br />
         <button type="submit">Search</button>
@@ -43,4 +27,5 @@
     <div id="output"><progress/></div>
   </body>
   <script src="main.js" type="module"></script>
+  <script src="siav.js" type="module"></script>
 </html>

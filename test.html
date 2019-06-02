@@ -2,21 +2,20 @@
 <head>
   <script src="https://unpkg.com/lodash@4.17.11/lodash.js"></script>
   <script src="https://unpkg.com/benchmark@2.1.4/benchmark.js"></script>
+  <script src="https://peterolson.github.io/BigInteger.js/BigInteger.min.js"></script>
 </head>
 <body>
-  <script>
+  <script type="module">
+    import { BigIntMath } from "./math.js";
     var suite = new Benchmark.Suite();
 
     // add tests
     suite
-      .add("RegExp#test", function() {
-        /o/.test("Hello World!");
+      .add("isPrime", function() {
+        BigIntMath.isProbablePrime(12676506002282294014967032056537n);
       })
-      .add("String#indexOf", function() {
-        "Hello World!".indexOf("o") > -1;
-      })
-      .add("String#match", function() {
-        !!"Hello World!".match(/o/);
+      .add("peterolson", function() {
+        bigInt(12676506002282294014967032056537n).isProbablePrime(20);
       })
       // add listeners
       .on("cycle", function(event) {

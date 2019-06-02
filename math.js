@@ -24,7 +24,7 @@ export class BigIntMath {
 
   static bitLength(n) {
     let i = 0;
-    while (n >= 1n) {
+    while (n > 0n) {
       i++;
       n >>= 1n;
     }
@@ -103,8 +103,93 @@ export class BigIntMath {
     return newtonIteration(value, 1n);
   }
 
-  // https://peterolson.github.io/BigInteger.js/BigInteger.min.js
+  /**
+   * Returns a^k mod n
+   * @param {bigint} a base
+   * @param {bigint} k exponent
+   * @param {bigint} n modulus
+   * @returns {bigint} a^k % n
+   */
+  static pow(a, k, n = 0n) {
+    if (k < 0n) {
+      throw new Error(`expected non-negative exponent, got ${k}`);
+    }
+
+    if (n === 0n) {
+      return a ** k;
+    }
+
+    if (n === 1n || a === 0n) {
+      return 0n;
+    }
+
+    let result = 1n;
+    while (k > 0) {
+      if (k % 2n === 1n) {
+        result = (result * a) % n;
+      }
+      a = (a * a) % n;
+      k >>= 1n;
+    }
+    return result;
+  }
+
+  /**
+   * Returns a random integer in [0,n).
+   * @param {bigint} n
+   * @returns {bigint}
+   */
+  static random(n) {
+    let result = 0n;
+    const n1 = n;
+    while (n > 0n) {
+      result += Math.random() > 0.5 ? 1n : 0n;
+      result <<= 1n;
+      n >>= 1n;
+    }
+    return result % n1;
+  }
+
   static isProbablePrime(n, iterations = 20) {
-    return bigInt(n).isProbablePrime(Number(iterations));
+    // TODO: this is really slow when n is composite
+    // Small cases
+    if ([2n, 3n, 5n, 7n, 11n, 13n, 17n, 19n, 23n, 29n, 31n, 37n].includes(n)) {
+      return true;
+    }
+
+    if (n < 40n) {
+      return false;
+    }
+
+    // Write n-1 = 2^r * d
+    let r = 0n;
+    let d = n - 1n;
+    while (d % 2n === 0n) {
+      d /= 2n;
+      r++;
+    }
+
+    // https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test#Miller%E2%80%93Rabin_test
+    witnessLoop: do {
+      const a = BigIntMath.random(n - 4n) + 2n;
+      let x = BigIntMath.pow(a, d, n);
+      if (x === 1n || x === n - 1n) {
+        continue witnessLoop;
+      }
+      for (let j = 0n; j < r - 1n; j++) {
+        x = (x * x) % n;
+        if (x === n - 1n) {
+          continue witnessLoop;
+        }
+      }
+      return false;
+    } while (--iterations > 0);
+    return true;
+  }
+
+  static toString(a) {
+    return `${a}`;
   }
 }
+
+window.BigIntMath = BigIntMath;
