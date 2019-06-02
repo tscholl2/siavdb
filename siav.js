@@ -8,8 +8,11 @@ import { PolynomialMath } from "./polynomial.js";
  * @param {Array<bigint>} f
  */
 function computeSIAVData(f) {
-  const g = PolynomialMath.degree(f) / 2;
-  const D = PolynomialMath.discriminant(f) / f[0] ** BigInt(g - 1);
+  const g = BigInt(PolynomialMath.deg(f) / 2);
+  const D = PolynomialMath.discriminant(f) / f[0] ** (g - 1n);
+  const [p, a1] = BigIntMath.isPerfectPower(f[0])
+  const a = a1 / g;
+  console.log({ g, D, p, a })
   // TODO: NP -- newton polygon
   // TODO: Ap -- p-torsion
   // TODO: OR -- ordinary
@@ -21,3 +24,4 @@ function computeSIAVData(f) {
   // TODO: T -- Deligne functor image
 }
 
+window.computeSIAVData = computeSIAVData;

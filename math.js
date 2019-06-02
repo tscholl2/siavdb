@@ -135,6 +135,21 @@ export class BigIntMath {
   }
 
   /**
+   * Returns k such that p^k || a
+   * @param {bigint} a 
+   * @param {bigint} p 
+   * @returns {bigint}
+   */
+  static ord(a, p) {
+    const k = 0n;
+    while (a % p === 0n) {
+      k++
+      a /= p
+    }
+    return k;
+  }
+
+  /**
    * Returns a random integer in [0,n).
    * @param {bigint} n
    * @returns {bigint}

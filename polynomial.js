@@ -47,15 +47,15 @@ export class PolynomialMath {
     }
     return h;
   }
-  
+
   static scale(f, k) {
     return f.map(a => k * a);
   }
-  
+
   static sub(f, g) {
     return PolynomialMath.add(f, PolynomialMath.scale(g, -1n));
   }
-  
+
   /**
    * Returns true if the ideals (f) and (g) in Z[x]
    * sum to (1). Otherwise, returns false.
@@ -63,7 +63,7 @@ export class PolynomialMath {
    * @param {Array<bigint>} g 
    * @returns {boolean}
    */
-  static coprime(f,g) {
+  static coprime(f, g) {
     // TODO: run xgcd in Q[x] to find u,v such that u*f + v*g = 1.
     //       return false if no such u,v exist or if u,v not in Z[x].
   }
@@ -104,7 +104,7 @@ export class PolynomialMath {
     const s = BigInt((-1) ** ((n * (n - 1)) / 2));
     return (s * R) / an;
   }
-  
+
   static toString(f) {
     return f
       .map(
@@ -115,3 +115,46 @@ export class PolynomialMath {
   }
 }
 window.PolynomialMath = PolynomialMath;
+
+window.NP = function newtonPolygon(f, p) {
+  if (f[0] * f[f.length - 1] === 0n) {
+    throw Error("expected a0an != 0")
+  }
+  const pts = [];
+  for (let i = 0; i < f.length; i++) {
+    if (f[i] !== 0n) {
+      pts.push([BigInt(i), BigIntMath.ord(f[i], p)])
+    }
+  }
+  const NP = [pts[0]]
+  const prev = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const P = pts[i]
+  }
+
+  /**
+   *         R
+   * P
+   *     Q
+   * 
+   * or
+   * 
+   *     Q
+   * P
+   *        R
+   * 
+   * @param {[2]BigInt} P 
+   * @param {[2]BigInt} Q 
+   * @param {[2]BigInt} R 
+   */
+  function isLeft(P, Q, R) {
+    slope1num = Q[1] - P[1];
+    slope1den = Q[0] - P[0];
+    slope2num = R[1] - P[1];
+    slope2den = R[0] - P[0];
+    // Slope(P,Q) < Slope(P,R)
+    if (slope1num * slope2den <= slope1den * slope2num) {
+      return true;
+    }
+  }
+}
