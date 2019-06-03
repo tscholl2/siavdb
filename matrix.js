@@ -1,3 +1,5 @@
+import { PolynomialMath } from "./polynomial.js";
+
 export class MatrixMath {
   static zero(n) {
     const A = new Array(n);
@@ -33,17 +35,6 @@ export class MatrixMath {
     return MatrixMath.add(A, MatrixMath.scale(B, -1n));
   }
 
-  static scale(A, k) {
-    const n = A.length;
-    const B = MatrixMath.zero(n);
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        B[i][j] = k * A[i][j];
-      }
-    }
-    return B;
-  }
-
   static mul(A, B) {
     const n = A.length;
     const C = MatrixMath.zero(n);
@@ -55,6 +46,17 @@ export class MatrixMath {
       }
     }
     return C;
+  }
+
+  static scale(A, k) {
+    const n = A.length;
+    const B = MatrixMath.zero(n);
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        B[i][j] = k * A[i][j];
+      }
+    }
+    return B;
   }
 
   static det(A) {
@@ -72,6 +74,15 @@ export class MatrixMath {
   }
 
   static minor(A, i, j) {
+    console.log(
+      "calling minor ",
+      "A = ",
+      `[${A.map(
+        row => `[${row.map(a => `${PolynomialMath.toString(a)}`).join(",")}]`
+      ).join(",")}]`,
+      i,
+      j
+    );
     const n = A.length;
     const Am = MatrixMath.zero(n - 1);
     for (let r = 0; r < n - 1; r++) {
@@ -116,6 +127,31 @@ export class MatrixMath {
       }
     }
     return At;
+  }
+
+  static charPoly(A) {
+    const n = A.length;
+    const B = MatrixMath.zero(n);
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        B[i][j] = i === j ? [-A[i][j], 1n] : [-A[i][j]];
+      }
+    }
+    return det(B);
+
+    function det(A) {
+      if (A.length <= 1) {
+        return A[0][0];
+      }
+      let f = PolynomialMath.zero();
+      for (let i = 0; i < n; i++) {
+        const Am = MatrixMath.minor(A, i, 0);
+        const d = PolynomialMath.mul(A[i][0], det(Am));
+        const g = PolynomialMath.scale(d, BigInt((-1) ** i));
+        f = PolynomialMath.add(f, g);
+      }
+      return f;
+    }
   }
 
   static toString(A) {

@@ -32,6 +32,20 @@ export class PolynomialMath {
     return h;
   }
 
+  static prod(...values) {
+    return values.reduce(
+      (p, c) => PolynomialMath.mul(p, c),
+      PolynomialMath.one()
+    );
+  }
+
+  static sum(...values) {
+    return values.reduce(
+      (p, c) => PolynomialMath.add(p, c),
+      PolynomialMath.zero()
+    );
+  }
+
   static add(f, g) {
     const n = PolynomialMath.deg(f);
     const m = PolynomialMath.deg(g);
@@ -59,8 +73,8 @@ export class PolynomialMath {
   /**
    * Returns true if the ideals (f) and (g) in Z[x]
    * sum to (1). Otherwise, returns false.
-   * @param {Array<bigint>} f 
-   * @param {Array<bigint>} g 
+   * @param {Array<bigint>} f
+   * @param {Array<bigint>} g
    * @returns {boolean}
    */
   static coprime(f, g) {
@@ -108,7 +122,10 @@ export class PolynomialMath {
   static toString(f) {
     return f
       .map(
-        (a, i) => `${i > 0 && a === 1n ? "" : `${a}`}${i === 0 ? "" : `x^${i}`}`
+        (a, i) =>
+          `${i > 0 && a === 1n ? "" : `${a}`}${
+            i === 0 ? "" : i === 1 ? "x" : `x^${i}`
+          }`
       )
       .filter(s => !s.startsWith("0"))
       .join(" + ");
@@ -118,34 +135,34 @@ window.PolynomialMath = PolynomialMath;
 
 window.NP = function newtonPolygon(f, p) {
   if (f[0] * f[f.length - 1] === 0n) {
-    throw Error("expected a0an != 0")
+    throw Error("expected a0an != 0");
   }
   const pts = [];
   for (let i = 0; i < f.length; i++) {
     if (f[i] !== 0n) {
-      pts.push([BigInt(i), BigIntMath.ord(f[i], p)])
+      pts.push([BigInt(i), BigIntMath.ord(f[i], p)]);
     }
   }
-  const NP = [pts[0]]
+  const NP = [pts[0]];
   const prev = 0;
   for (let i = 1; i < pts.length; i++) {
-    const P = pts[i]
+    const P = pts[i];
   }
 
   /**
    *         R
    * P
    *     Q
-   * 
+   *
    * or
-   * 
+   *
    *     Q
    * P
    *        R
-   * 
-   * @param {[2]BigInt} P 
-   * @param {[2]BigInt} Q 
-   * @param {[2]BigInt} R 
+   *
+   * @param {[2]BigInt} P
+   * @param {[2]BigInt} Q
+   * @param {[2]BigInt} R
    */
   function isLeft(P, Q, R) {
     slope1num = Q[1] - P[1];
@@ -157,4 +174,4 @@ window.NP = function newtonPolygon(f, p) {
       return true;
     }
   }
-}
+};
