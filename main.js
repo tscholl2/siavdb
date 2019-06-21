@@ -22,6 +22,7 @@ async function updateOutput() {
   const { q } = readSearchParametersFromForm();
   console.log("got q = ", q);
   const result = await SIAVs(q);
+  console.log("got results", result);
   const ul = document.createElement("ul");
   for (let A of result) {
     const li = document.createElement("li");
@@ -45,7 +46,7 @@ async function updateOutput() {
       "Kdisc": 125,
       "Kdeg": 4,
     }*/
-    console.log("constructing html")
+    console.log("constructing html");
     li.innerHTML = `
 
 <table class="siav-data">
@@ -100,7 +101,7 @@ async function updateOutput() {
 </table>
 
 `;
-console.log("got li")
+    console.log("got li");
     ul.append(li);
   }
   div.innerHTML = "";
@@ -127,8 +128,9 @@ async function SIAVs(q) {
   console.log("fetched");
   const result = [];
   console.log(SIAV_DB);
+  console.log("LENGTH = ", SIAV_DB.length);
   for (let A of SIAV_DB) {
-    if (A["q"] === q) {
+    if (`${A["q"]}` === `${q}`) {
       result.push(A);
     }
   }
