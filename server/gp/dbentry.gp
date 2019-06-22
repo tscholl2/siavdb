@@ -1,4 +1,5 @@
-f = x^4 - 29*x^3 + 331*x^2 - 1769*x + 3721;
+\\ f = x^4 - 29*x^3 + 331*x^2 - 1769*x + 3721;
+f = eval(readstr("/dev/stdin")[1]); \\ This is bad
 
 g = poldegree(f)/2;
 p = divisors(polcoef(f,0))[2];
