@@ -1,0 +1,7 @@
+li.siav-li > table {
+  text-align: center;
+  border: 2px solid blue;
+}
+li.siav-li {
+  list-style: none;
+}

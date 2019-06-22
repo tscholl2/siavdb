@@ -1,3 +1,8 @@
+const renderMath = () =>
+  renderMathInElement(document.body, {
+    // ...options...
+  });
+
 document.addEventListener("DOMContentLoaded", async () => {
   const form = document.getElementById("search-parameters");
   form.onsubmit = e => {
@@ -9,9 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 let IS_LOADING = false;
 async function updateOutput() {
-  console.log("updating output...");
   if (IS_LOADING) {
-    console.log("currently loading");
     return;
   }
   IS_LOADING = true;
@@ -20,12 +23,11 @@ async function updateOutput() {
   // TODO: disable form
   //const form = document.getElementById("search-parameters");
   const { q } = readSearchParametersFromForm();
-  console.log("got q = ", q);
   const result = await SIAVs(q);
-  console.log("got results", result);
   const ul = document.createElement("ul");
   for (let A of result) {
     const li = document.createElement("li");
+    li.classList.add("siav-li");
     /*{
       "f": "x^4 - 29*x^3 + 331*x^2 - 1769*x + 3721",
       "p": 61,
@@ -46,67 +48,91 @@ async function updateOutput() {
       "Kdisc": 125,
       "Kdeg": 4,
     }*/
-    console.log("constructing html");
     li.innerHTML = `
-
-<table class="siav-data">
+<table>
 <tr>
     <th>Weil Polynomial</th>
     <th>Base Field</th>
     <th>Newton Polygon</th>
   </tr>
   <tr>
-    <td>f(x) = ${A["f"]}</td>
-    <td>q = ${A["q"]} = ${A["p"]}<sup>${A["a"]}</sup></td>
-    <td>slopes = ${A["NP"]}</td>
+    <td>\\( f(x) = ${A["f"].replace(/\*/g, "")} \\)</td>
+    <td>\\( q = ${A["q"]} = ${A["p"]}^{${A["a"]}} \\)</sup></td>
+    <td>slopes: \\( ${A["NP"]} \\)</td>
   </tr>
   <tr>
     <th>Approximate Complex Roots</th>
     <th>Approximate p-Adic Roots</th>
   </tr>
   <tr>
-    <td>${A["croots"]}</td>
-    <td>${A["proots"]}</td>
+    <td><ul>${A["croots"]
+      .map(
+        a =>
+          `<li style="list-style:none;">\\( ${a
+            .replace(/(\d+\.\d{5})(\d+)/g, "$1...")
+            .replace(/\*I/g, "i")} \\)</li>`
+      )
+      .join("")}</ul></td>
+    <td><ul>${A["proots"]
+      .map(
+        a =>
+          `<li style="list-style:none;">\\( ${a.replace(
+            /\*/g,
+            "\\cdot"
+          )} \\)</li>`
+      )
+      .join("")}</ul></td>
   </tr>
   <tr>
     <th>Dimension</th>
     <th>Number of Points</th>
     <th>p-Rank</th>
+    <th>Ordinary</th>
   </tr>
   <tr>
-    <td>dim A = ${A["g"]}</td>
-    <td>#A(F<sub>q</sub>) = ${A["N"]}</td>
-    <td>dim A[p] = ${A["AP"]}</td>
-    <td>A is ${A["OR"] ? "" : "not"} ordinary</td>
+    <td>\\( \\dim A = ${A["g"]} \\)</td>
+    <td>\\( \\# A(\\mathbb{F}_q) = ${A["N"]} \\)</td>
+    <td>\\( \\dim A[p] = ${A["AP"]} \\)</td>
+    <td>${A["OR"] ? "Yes" : "No"}</td>
   </tr>
   <tr>
     <th>Deligne Module</th>
   </tr>
   <tr>
-    <td>F = ${A["F"]}</td>
-    <td>V = ${A["V"]}</td>
+    <td>\\( F = \\begin{bmatrix} ${A["F"]
+      .map(r => `${r.map(c => `${c}`).join(" & ")}`)
+      .join(" \\\\ ")} \\end{bmatrix} \\)
+    </td>
+    <td>\\( V = \\begin{bmatrix} ${A["V"]
+      .map(r => `${r.map(c => `${c}`).join(" & ")}`)
+      .join(" \\\\ ")} \\end{bmatrix} \\)
+    </td>
   </tr>
   <tr>
     <th>CM Field</th>
-    <th>Degree</th>
     <th>Discriminant</th>
     <th>Real Subfield</th>
+    <th>Discriminant</th>
   </tr>
   <tr>
-    <td>K = ℚ[x]/⟨${A["Kf"]}⟩</td>
-    <td>deg K = ${A["Kdeg"]}</td>
-    <td>disc<sub>K</sub> = ${A["Kdisc"]}</td>
-    <td>K<sup>+</sup> = ℚ[y]/⟨${A["Kh"]}⟩</td>
+    <td>\\( K = \\frac{\\mathbb{Q}[x]}{\\langle ${A["Kf"].replace(
+      /\*/g,
+      ""
+    )} \\rangle} \\)</td>
+    <td>\\( \\mathrm{Disc}(K) = ${A["Kdisc"]} \\)</td>
+    <td>\\( K^+ = \\frac{\\mathbb{Q}[y]}{\\langle ${A["K+f"].replace(
+      /\*/g,
+      ""
+    )} \\rangle} \\)</td>
+    <td>\\( \\mathrm{Disc}(K^+) = ${A["K+disc"]} \\)</td>
   </tr>
-</table>
-
-`;
-    console.log("got li");
+</table>`;
     ul.append(li);
   }
   div.innerHTML = "";
   div.append(ul);
   IS_LOADING = false;
+  renderMath();
 }
 
 function readSearchParametersFromForm() {
@@ -117,24 +143,18 @@ function readSearchParametersFromForm() {
 
 let SIAV_DB = undefined;
 async function SIAVs(q) {
-  console.log("searching...", q);
   await new Promise(resolve => setTimeout(resolve, 1000));
   if (SIAV_DB === undefined) {
-    console.log("fetching...");
     const response = await fetch("data/siav-dev.json");
     SIAV_DB = await response.json();
     window.siav = SIAV_DB;
   }
-  console.log("fetched");
   const result = [];
-  console.log(SIAV_DB);
-  console.log("LENGTH = ", SIAV_DB.length);
   for (let A of SIAV_DB) {
     if (`${A["q"]}` === `${q}`) {
       result.push(A);
     }
   }
-  console.log("returning");
   // Call for more if q > 5000
   return result;
 }
