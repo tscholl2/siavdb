@@ -145,7 +145,7 @@ let SIAV_DB = undefined;
 async function SIAVs(q) {
   await new Promise(resolve => setTimeout(resolve, 1000));
   if (SIAV_DB === undefined) {
-    const response = await fetch("data/siav-dev.json");
+    const response = await fetch("server/data/siav-dev.json");
     SIAV_DB = await response.json();
     window.siav = SIAV_DB;
   }
