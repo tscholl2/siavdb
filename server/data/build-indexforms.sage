@@ -36,11 +36,15 @@ try:
     indexforms = load("indexforms.sobj")
 except IOError:
     indexforms = []
+
+print "Testing current data"
 for F,gens in indexforms:
-    assert all(F.order([a]).is_maximal() for a in gens)
+    assert all(F.order([a]).is_maximal() for a in gens), F
+print "Current data OK"
 
 load("cm-fields-8.sage")
 
+print "Collecting new data"
 from tqdm import tqdm
 for f in tqdm(data):
     K.<a> = NumberField(f)
@@ -53,3 +57,4 @@ for f in tqdm(data):
         continue
     indexforms.append([F,gens])
     save(indexforms,"indexforms.sobj")
+print "Done"
