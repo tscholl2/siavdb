@@ -11,7 +11,7 @@ def wg_find_T(F):
         return ((F.disc() + sqrt(F.disc()))/2).minpoly().roots(ring=F,multiplicities=False)
     for F2,gens in indexforms:
         if F2.is_isomorphic(F):
-            phi = F2.embeddings(F2)[0]
+            phi = F2.embeddings(F)[0]
             return [phi(a) for a in gens]
     raise Exception("unimplemented: %s" % F)
 

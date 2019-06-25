@@ -1,37 +1,39 @@
 load("search.sage")
 
 try:
-    siavlist = load("siavlist.sobj")
+    siavlist = set(load("siav-list.sobj"))
 except IOError:
-    siavlist = []
+    siavlist = set([])
 
-print "Testing current data"
-for f in siavlist:
+from tqdm import tqdm
+
+for f in tqdm(siavlist,desc="Testing..."):
+    continue
     K.<pi> = NumberField(f)
     assert ZZ(pi*pi.conjugate()).is_pseudoprime_power()
     assert K.order([pi,pi.conjugate()]).is_maximal()
     assert K.class_number() == 1
-print "Current data OK"
 
 print "Collecting new data"
-from tqdm import tqdm
-for g in tqdm([1,2,3,4],desc="Dimension")):
-    load("cm-fields-%d.sage" % (2*g))
-    for f in tqdm(data,desc="Field"):
-        K.<a> = NumberField(f)
-        if g == 1:
-            M = 10000
-        if g == 2:
-            M = 5000
-        if g == 3:
-            M = 500
-        if g == 4:
-            M = 10
-        for pi in wg_search(f,M=M):
-            h = pi.minpoly()
-            if h not in siavlist:
-                siavlist.append(h)
-                save(siavlist,"siavlist.sobj")
+# 4 min for g=1
+# A few hours for g=2
+g = 4
+load("cm-fields-%d.sage" % (2*g))
+for f in tqdm(data,desc="CM Fields"):
+    K.<a> = NumberField(f)
+    if g == 1:
+        M = 1000
+    if g == 2:
+        M = 100
+    if g == 3:
+        M = 20
+    if g == 4:
+        M = 5
+    T = wg_find_T(K.maximal_totally_real_subfield()[0])
+    for pi in tqdm(wg_search(K,M=M),total=int(4*M) if g == 1 else int(2*(2*M)^(g-1)*len(T)),desc="Polynomials"):
+        if ZZ(pi*pi.conjugate()).is_pseudoprime_power():
+            siavlist.add(pi.minpoly())
+    save(list(siavlist),"siavlist.sobj")
 print "Done"
 
 
