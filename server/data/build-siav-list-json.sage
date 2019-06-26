@@ -2,7 +2,7 @@ def siav_info(f):
     R.<x> = ZZ[]
     S.<y> = ZZ[]
     g = ZZ(f.degree()/2)
-    p = ZZ(f(0)).prime_divisors()[0]
+    p,_ = ZZ(f(0)).perfect_power()
     a = ZZ(log(f(0),p)/g)
     q = p^a
 
@@ -17,10 +17,6 @@ def siav_info(f):
         "p": str(p),
         "q": str(q),
         "croots": [str(z) for z,_ in f.roots(ring=CC)],
-        "proots": [
-            str(z).replace("*%d"%p,"*p").replace("O(%d"%p,"O(p").replace("+ %d"%p,"+ p")
-            for z,_ in f.roots(ring=pAdicField(p,5))
-        ],
         # AV stuff
         "g": str(g),
         "N": str(ZZ(f(1))),
