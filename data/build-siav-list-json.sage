@@ -15,6 +15,7 @@ def siav_info(f):
         # Weil number stuff
         "f": str(f),
         "p": str(p),
+        "a": str(a),
         "q": str(q),
         "croots": [str(z) for z,_ in f.roots(ring=CC)],
         # AV stuff
@@ -23,8 +24,8 @@ def siav_info(f):
         "NP": [str(QQ(a)) for a in pari.newtonpoly(f,p)],
         "AP": str(list(pari.newtonpoly(f,2)).count(0)),
         "OR": list(pari.newtonpoly(f,2)).count(0) == g,
-        "F": [[str(a) for a in r] for r in Matrix([M*(pi*b).vector() for b in B])],
-        "V": [[str(a) for a in r] for r in Matrix([M*(pi.conjugate()*b).vector() for b in B])],
+        "F": [[str(a) for a in r] for r in Matrix([M*(pi*b).vector() for b in B]).transpose()],
+        "V": [[str(a) for a in r] for r in Matrix([M*(pi.conjugate()*b).vector() for b in B]).transpose()],
         "PP": not ((pi-pi.conjugate()).norm() == 1 and f[g]%(4 if q == 2 else q) == (3 if q == 2 else q-1)),
         # CM Field stuff
         "Kf": str(K.optimized_representation()[0].polynomial()),
