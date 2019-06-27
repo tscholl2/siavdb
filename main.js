@@ -1,4 +1,7 @@
 import { SIAVs } from "./data.js";
+import { nextSIEC } from "./siec.js";
+
+window.nextSIEC = nextSIEC; // for testing
 
 const renderMath = () =>
   renderMathInElement(document.body, {
