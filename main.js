@@ -236,6 +236,8 @@ function MoreDetail(siav) {
       h("tr", null, h("td", null, `Slopes: \\( ${siav["NP"]} \\)`)),
       h("tr", null, h("th", null, "Ordinary")),
       h("tr", null, h("td", null, `${siav["OR"] ? "Yes" : "No"}`)),
+      h("tr", null, h("th", null, "Principally Polarized")),
+      h("tr", null, h("td", null, `${siav["PP"] ? "Yes" : "No"}`)),
       h("tr", null, h("th", null, "p-Rank")),
       h("tr", null, h("td", null, `\\( \\dim A[p] = ${siav["AP"]} \\)`)),
       h("tr", null, h("th", null, "Deligne Module")),
@@ -342,10 +344,10 @@ function siavComparator(a, b) {
   if (BigInt(a["q"]) > BigInt(b["q"])) {
     return 1;
   }
-  if (a["id"] < b["id"]) {
+  if (a["f"] < b["f"]) {
     return -1;
   }
-  if (a["id"] > b["id"]) {
+  if (a["f"] > b["f"]) {
     return 1;
   }
   return 0;
