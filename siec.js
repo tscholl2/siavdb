@@ -10,6 +10,7 @@ function siecData(t, q) {
   const [p, a] = BigIntMath.isPerfectPower(q);
   const d = q - t ** 2n; // this is positive
   return {
+    id: `1,${t},${q}`,
     f:
       t > 0n
         ? `x^2 - ${t}x + ${q}`
@@ -19,7 +20,7 @@ function siecData(t, q) {
     p: `${p}`,
     a: `${a}`,
     q: `${q}`,
-    croots: t === 0n ? [`sqrt(${q})`, `-sqrt(${q})`] : "???",
+    croots: t === 0n ? [`sqrt(${q})`, `-sqrt(${q})`] : ["?", "?"],
     g: "1",
     N: `${1n - t + q}`,
     NP: t % p !== 0n ? ["1", "0"] : ["1/2", "1/2"],
@@ -44,6 +45,11 @@ function siecData(t, q) {
   };
 }
 
+/**
+ *
+ * @param {BigInt} M
+ * @returns {Array}
+ */
 export function nextSIEC(M) {
   const arr = nextORSIEC(M);
   const brr = nextSSSIEC(M);
@@ -68,7 +74,7 @@ function nextORSIEC(M) {
     throw Error("expected bigint got", typeof M);
   }
   if (M < 1621n) {
-    throw Error("unimplemented for small M");
+    throw Error("unimplemented for small M: ", M);
   }
   let t = BigIntMath.sqrt(4n * M - 163n);
   if (t ** 2n < 4n * M - 163n) {
@@ -81,7 +87,7 @@ function nextORSIEC(M) {
         continue;
       }
       q = q >> 2n;
-      const [p, a] = BigIntMath.isPerfectPower(q);
+      const p = BigIntMath.isPerfectPower(q)[0];
       if (q > M && BigIntMath.isProbablePrime(p, 20n)) {
         return [siecData(t, q), siecData(-t, q)];
       }
@@ -95,13 +101,14 @@ function nextORSIEC(M) {
  * about the next supersingular SIEC over
  * F_q with q close to M.
  * @param {BigInt} M
+ * @returns {Array}
  */
 function nextSSSIEC(M) {
   const q = BigIntMath.min(
     ...[2n, 3n, 5n, 7n, 13n].map(p => {
       let k = 1;
       let q = p;
-      while (q < M && (p > 3n ? k % 2 === 0 : true)) {
+      while (q < M || (p > 3n && k % 2 !== 0)) {
         k++;
         q *= p;
       }

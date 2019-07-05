@@ -1,3 +1,5 @@
+import hashlib
+
 def siav_info(f):
     R.<x> = ZZ[]
     S.<y> = ZZ[]
@@ -12,6 +14,8 @@ def siav_info(f):
     F,iota = K.maximal_totally_real_subfield()
 
     return {
+        # Meta stuff
+        "id": hashlib.sha256(",".join(map(str,f.coefficients(sparse=False)))).hexdigest(),
         # Weil number stuff
         "f": str(f),
         "p": str(p),
