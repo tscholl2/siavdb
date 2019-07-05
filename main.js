@@ -8,7 +8,7 @@ window.nextSIEC = nextSIEC;
 document.addEventListener("DOMContentLoaded", start);
 
 function start() {
-  const c = new Controller({ search: { g: "2" } });
+  const c = new Controller({ search: { g: "4" } });
   const app = App(c.dispatch);
   c.addListener((s, d) => patch(document.getElementById("app"), app(s)));
   /*
@@ -56,7 +56,6 @@ function App(dispatch) {
     // TODO: this should go in webworker
     for (let i = 0; i < 10; i++) {
       const e = nextSIEC(q + 1n);
-      console.log("ADDED", e);
       data = data.concat(e);
       q = BigIntMath.max(
         ...data.filter(A => A["g"] === "1").map(E => BigInt(E["q"]))
@@ -149,13 +148,13 @@ function Loading() {
 function LessDetail(siav) {
   let s;
   if (siav["q"].length >= 20) {
-    s = `\\(g = ${siav["g"]}\\), \\(q \\approx 2^{${(
+    s = `g = ${siav["g"]}, q \\approx 2^{${(
       siav["q"].length / Math.log10(2)
-    ).toFixed(2)}}\\)`;
+    ).toFixed(2)}}`;
   } else {
-    s = `\\( ${siav["f"].replace(/\*/g, "")} \\)`;
+    s = `${siav["f"].replace(/\*/g, "")}`;
   }
-  return h("span", null, s);
+  return h("math-tex", null, s);
 }
 
 /**
