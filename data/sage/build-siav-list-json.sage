@@ -8,7 +8,9 @@ def siav_info(f):
     a = ZZ(log(f(0),p)/g)
     q = p^a
 
-    K.<pi> = NumberField(f)
+    K0.<pi0> = NumberField(f)
+    K, _, to_K = K0.optimized_representation()
+    pi = to_K(pi0)
     B = K.ring_of_integers().basis()
     M = Matrix([b.vector() for b in B]).transpose().inverse()
     F,iota = K.maximal_totally_real_subfield()
@@ -32,8 +34,8 @@ def siav_info(f):
         "V": [[str(a) for a in r] for r in Matrix([M*(pi.conjugate()*b).vector() for b in B]).transpose()],
         "PP": not ((pi-pi.conjugate()).norm() == 1 and f[g]%(4 if q == 2 else q) == (3 if q == 2 else q-1)),
         # CM Field stuff
-        "Kf": str(K.optimized_representation()[0].polynomial()),
-        "K+f": "y - 1" if F.degree() == 1 else str(F.optimized_representation()[0].polynomial()(y)),
+        "Kf": str(K.polynomial()),
+        "K+f": "y - 1" if F.degree() == 1 else str(F.polynomial()(y)),
         "Kdisc": str(K.disc()),
         "K+disc": str(1 if F.degree() == 1 else F.disc()),
         "Kdeg": str(K.degree()),
