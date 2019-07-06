@@ -8,7 +8,7 @@ window.nextSIEC = nextSIEC;
 document.addEventListener("DOMContentLoaded", start);
 
 function start() {
-  const c = new Controller({ search: { g: "4" } });
+  const c = new Controller({ search: { g: "1" } });
   const app = App(c.dispatch);
   c.addListener((s, d) => patch(document.getElementById("app"), app(s)));
   /*
@@ -31,22 +31,6 @@ function start() {
 
 function App(dispatch) {
   const search = Search(dispatch);
-  // TODO: is memoized doing anything?
-  const item = (siav, detailed) => {
-    return h(
-      "li",
-      {
-        key: siav["id"],
-        style: "cursor:pointer",
-        onclick: () =>
-          dispatch(s => ({
-            ...s,
-            detail: detailed ? "" : siav["id"]
-          }))
-      },
-      (detailed ? MoreDetail : LessDetail)(siav)
-    );
-  };
   const loadMore = state => {
     dispatch(s => ({ ...s, isLoading: true }));
     let data = state.data;
@@ -84,7 +68,21 @@ function App(dispatch) {
             null,
             filteredData.length === 0
               ? EmptyList()
-              : filteredData.map(siav => item(siav, siav["id"] === detail))
+              : filteredData.map(siav =>
+                  h(
+                    "li",
+                    {
+                      key: siav["id"],
+                      style: "cursor:pointer",
+                      onclick: () =>
+                        dispatch(s => ({
+                          ...s,
+                          detail: detail === siav["id"] ? "" : siav["id"]
+                        }))
+                    },
+                    (detail === siav["id"] ? MoreDetail : LessDetail)(siav)
+                  )
+                )
           ),
       !q && g === "1"
         ? h("button", { onclick: () => loadMore(state) }, "More")
@@ -193,13 +191,33 @@ function MoreDetail(siav) {
       h(
         "tr",
         null,
-        h("td", null, `\\( f(x) = ${siav["f"].replace(/\*/g, "")} \\)`)
+        h(
+          "td",
+          null,
+          h(
+            "math-tex",
+            null,
+            `f(x) = ${siav["f"]
+              .replace(/\*/g, "")
+              .replace(/\^(\d+)/g, "^{$1}")}`
+          )
+        )
       ),
       h("tr", null, h("th", null, "Base Field")),
       h(
         "tr",
         null,
-        h("td", null, `\\( q = ${siav["q"]} = ${siav["p"]}^{${siav["a"]}} \\)`)
+        h(
+          "td",
+          null,
+          h(
+            "math-tex",
+            null,
+            siav["a"] === "1"
+              ? `q = p = ${siav["q"]}`
+              : `q = ${siav["q"]} = ${siav["p"]}^{${siav["a"]}}`
+          )
+        )
       ),
       h("tr", null, h("th", null, "Approximate Complex Roots")),
       h(
@@ -215,30 +233,50 @@ function MoreDetail(siav) {
               h(
                 "li",
                 { style: "list-style:none;" },
-                `\\( ${a
-                  .replace(/(\d+\.\d{5})(\d+)/g, "$1...")
-                  .replace(/\*I/g, "i")} \\)`
+                h(
+                  "math-tex",
+                  null,
+                  `${a
+                    .replace(/(\d+\.\d{5})(\d+)/g, "$1...")
+                    .replace(/\*I/g, "i")}`
+                )
               )
             )
           )
         )
       ),
       h("tr", null, h("th", null, "Dimension")),
-      h("tr", null, h("td", null, `\\( \\dim A = ${siav["g"]} \\)`)),
+      h(
+        "tr",
+        null,
+        h("td", null, h("math-tex", null, `\\dim A = ${siav["g"]}`))
+      ),
       h("tr", null, h("th", null, "Number of Points")),
       h(
         "tr",
         null,
-        h("td", null, `\\( \\# A(\\mathbb{F}_q) = ${siav["N"]} \\)`)
+        h(
+          "td",
+          null,
+          h("math-tex", null, `\\# A(\\mathbb{F}_q) = ${siav["N"]}`)
+        )
       ),
       h("tr", null, h("th", null, "Newton Polygon")),
-      h("tr", null, h("td", null, `Slopes: \\( ${siav["NP"]} \\)`)),
+      h(
+        "tr",
+        null,
+        h("td", null, ["Slopes:", h("math-tex", null, `${siav["NP"]}`)])
+      ),
       h("tr", null, h("th", null, "Ordinary")),
       h("tr", null, h("td", null, `${siav["OR"] ? "Yes" : "No"}`)),
       h("tr", null, h("th", null, "Principally Polarized")),
       h("tr", null, h("td", null, `${siav["PP"] ? "Yes" : "No"}`)),
       h("tr", null, h("th", null, "p-Rank")),
-      h("tr", null, h("td", null, `\\( \\dim A[p] = ${siav["AP"]} \\)`)),
+      h(
+        "tr",
+        null,
+        h("td", null, h("math-tex", null, `\\dim A[p] = ${siav["AP"]}`))
+      ),
       h("tr", null, h("th", null, "Deligne Module")),
       h(
         "tr",
@@ -246,9 +284,13 @@ function MoreDetail(siav) {
         h(
           "td",
           null,
-          `\\( F = \\begin{bmatrix} ${siav["F"]
-            .map(r => `${r.map(c => `${c}`).join(" & ")}`)
-            .join(" \\\\ ")} \\end{bmatrix} \\)`
+          h(
+            "math-tex",
+            null,
+            `F = \\begin{bmatrix} ${siav["F"]
+              .map(r => `${r.map(c => `${c}`).join(" & ")}`)
+              .join(" \\\\ ")} \\end{bmatrix}`
+          )
         )
       ),
       h(
@@ -257,9 +299,13 @@ function MoreDetail(siav) {
         h(
           "td",
           null,
-          `\\( V = \\begin{bmatrix} ${siav["V"]
-            .map(r => `${r.map(c => `${c}`).join(" & ")}`)
-            .join(" \\\\ ")} \\end{bmatrix} \\)`
+          h(
+            "math-tex",
+            null,
+            `V = \\begin{bmatrix} ${siav["V"]
+              .map(r => `${r.map(c => `${c}`).join(" & ")}`)
+              .join(" \\\\ ")} \\end{bmatrix}`
+          )
         )
       ),
       h("tr", null, h("th", null, "CM Field")),
@@ -269,17 +315,25 @@ function MoreDetail(siav) {
         h(
           "td",
           null,
-          `\\( K = \\frac{\\mathbb{Q}[x]}{\\langle ${siav["Kf"].replace(
-            /\*/g,
-            ""
-          )} \\rangle} \\)`
+          h(
+            "math-tex",
+            null,
+            `K = \\frac{\\mathbb{Q}[x]}{\\langle ${siav["Kf"].replace(
+              /\*/g,
+              ""
+            )} \\rangle}`
+          )
         )
       ),
       h("tr", null, h("th", null, "Discriminant")),
       h(
         "tr",
         null,
-        h("td", null, `\\( \\mathrm{Disc}(K) = ${siav["Kdisc"]} \\)`)
+        h(
+          "td",
+          null,
+          h("math-tex", null, `\\mathrm{Disc}(K) = ${siav["Kdisc"]}`)
+        )
       ),
       h("tr", null, h("th", null, "Real Subfield")),
       h(
@@ -288,17 +342,25 @@ function MoreDetail(siav) {
         h(
           "td",
           null,
-          `\\( K^+ = \\frac{\\mathbb{Q}[y]}{\\langle ${siav["K+f"].replace(
-            /\*/g,
-            ""
-          )} \\rangle} \\)`
+          h(
+            "math-tex",
+            null,
+            `K^+ = \\frac{\\mathbb{Q}[y]}{\\langle ${siav["K+f"].replace(
+              /\*/g,
+              ""
+            )} \\rangle}`
+          )
         )
       ),
       h("tr", null, h("th", null, "Discriminant")),
       h(
         "tr",
         null,
-        h("td", null, `\\( \\mathrm{Disc}(K^+) = ${siav["K+disc"]} \\)`)
+        h(
+          "td",
+          null,
+          h("math-tex", null, `\\mathrm{Disc}(K^+) = ${siav["K+disc"]}`)
+        )
       )
     ]
   );
