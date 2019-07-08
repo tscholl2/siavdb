@@ -8,7 +8,7 @@ window.nextSIEC = nextSIEC;
 document.addEventListener("DOMContentLoaded", start);
 
 function start() {
-  const c = new Controller({ search: { g: "1" } });
+  const c = new Controller({ search: { g: "4" } });
   const app = App(c.dispatch);
   c.addListener((s, d) => patch(document.getElementById("app"), app(s)));
   /*
@@ -30,7 +30,7 @@ function start() {
 // VIEWS
 
 function App(dispatch) {
-  const search = Search(dispatch);
+  const searchForm = Search(dispatch);
   const loadMore = state => {
     dispatch(s => ({ ...s, isLoading: true }));
     let data = state.data;
@@ -49,18 +49,33 @@ function App(dispatch) {
     dispatch(s => ({ ...s, data, isLoading: false }));
   };
   return state => {
-    const {
-      data = [],
-      isLoading,
-      detail,
-      search: { g, q }
-    } = state;
-    const filteredData = data.filter(
-      siav => (!g || siav["g"] === g) && (!q || siav["q"] === q)
-    );
+    const { data = [], isLoading, detail, search } = state;
+    // TODO: this should go in a webworker
+    const filteredData = [];
+    for (let siav of data) {
+      // console.log("looking at ", siav);
+      // console.log("search = ", search);
+      let ok = true;
+      for (let property in search) {
+        // console.log("comparing: ", property);
+        // console.log(search[property]);
+        // console.log(
+        //   search[property] && true,
+        //   `${search[property]}`,
+        //   `${siav[property]}`
+        // );
+        if (search[property] && `${search[property]}` != `${siav[property]}`) {
+          ok = false;
+        }
+      }
+      if (ok) {
+        filteredData.push(siav);
+      }
+      // break;
+    }
     return h("div", null, [
       h("h1", null, "Super-Isolated Abelian Varieties"),
-      search(state),
+      searchForm(state),
       isLoading
         ? Loading()
         : h(
@@ -84,7 +99,7 @@ function App(dispatch) {
                   )
                 )
           ),
-      !q && g === "1"
+      !search["q"] && search["g"] === "1"
         ? h("button", { onclick: () => loadMore(state) }, "More")
         : null
     ]);
@@ -92,7 +107,7 @@ function App(dispatch) {
 }
 
 function Search(dispatch) {
-  return ({ search: { g = "", q = "" } }) => {
+  return ({ search }) => {
     return h("fieldset", null, [
       h("legend", null, "Filter"),
       h(
@@ -100,31 +115,64 @@ function Search(dispatch) {
         {
           onsubmit: e => {
             e.preventDefault();
-            const g = e.target.elements["g"].value;
-            const q = e.target.elements["q"].value;
-            dispatch(s => ({ ...s, search: { ...s.search, g, q } }));
+            const values = {};
+            for (let el of e.target.elements) {
+              if (el.name && el.value) {
+                values[el.name] = el.value;
+              }
+            }
+            dispatch(s => ({ ...s, search: values }));
           }
         },
         [
           h("label", null, [
-            `\\(q = \\)`,
+            h("math-tex", null, "q = "),
             h("input", {
               name: "q",
               type: "text",
               placeholder: "107",
               pattern: "\\d+",
-              value: q
+              value: search["q"]
             })
           ]),
           h("br"),
           h("label", null, [
-            `\\(g = \\)`,
+            h("math-tex", null, "g = "),
             h("input", {
               name: "g",
               type: "number",
               min: "1",
               placeholder: "2",
-              value: g
+              value: search["g"]
+            })
+          ]),
+          h("br"),
+          h("label", null, [
+            "Principally Polarized ",
+            h("select", { name: "PP", value: search["PP"] }, [
+              h("option", { value: "" }, ""),
+              h("option", { value: "true" }, "Yes"),
+              h("option", { value: "false" }, "No")
+            ])
+          ]),
+          h("br"),
+          h("label", null, [
+            "Ordinary ",
+            h("select", { name: "OR", value: search["OR"] }, [
+              h("option", { value: "" }, ""),
+              h("option", { value: "true" }, "Yes"),
+              h("option", { value: "false" }, "No")
+            ])
+          ]),
+          h("br"),
+          h("label", null, [
+            h("math-tex", null, "\\# A(\\mathbb{F}_q) = "),
+            h("input", {
+              name: "N",
+              type: "text",
+              placeholder: "15",
+              pattern: "\\d+",
+              value: search["N"]
             })
           ]),
           h("br"),
