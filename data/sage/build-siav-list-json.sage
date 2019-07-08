@@ -1,4 +1,11 @@
 import hashlib
+import json
+
+try:
+    with open("../siav-list.json") as F:
+        previous_json = json.load(F)
+except IOError:
+    previous_json = []
 
 def siav_info(f):
     R.<x> = ZZ[]
@@ -9,7 +16,15 @@ def siav_info(f):
     q = p^a
 
     K0.<pi0> = NumberField(f)
-    K, _, to_K = K0.optimized_representation()
+    
+    try:
+        prev = next(d for d in previous_json if d["f"] == str(f))
+        K.<Pii> = NumberField(R(str(prev["Kf"])))
+        to_K = K0.embeddings(K)[0]
+        assert K.is_isomorphic(K0)
+    except:
+        K, _, to_K = K0.optimized_representation()
+
     pi = to_K(pi0)
     B = K.ring_of_integers().basis()
     M = Matrix([b.vector() for b in B]).transpose().inverse()
@@ -51,6 +66,5 @@ from tqdm import tqdm
 brr = []
 for f in tqdm(arr):
     brr.append(siav_info(f))
-import json
 with open("siav-list.json","w") as F:
-    json.dumps(brr,F)
+    json.dump(brr,F)
