@@ -1,7 +1,9 @@
 load("search.sage")
 
 try:
-    siavlist = set(load("siav-list.sobj"))
+    R.<x> = ZZ[]
+    with open("siav-list.txt") as F:
+        siavlist = set([R(line) for line in F.read().strip().splitlines()])
 except IOError:
     siavlist = set([])
 
@@ -31,9 +33,10 @@ for f in tqdm(data,desc="CM Fields"):
         M = 5
     T = wg_find_T(K.maximal_totally_real_subfield()[0])
     for pi in tqdm(wg_search(K,M=M),total=int(4*M) if g == 1 else int(2*(2*M)^(g-1)*len(T)),desc="Polynomials"):
-        if ZZ(pi*pi.conjugate()).is_pseudoprime_power():
+        if pi not in siavlist and ZZ(pi*pi.conjugate()).is_pseudoprime_power():
             siavlist.add(pi.minpoly())
-    save(list(siavlist),"siavlist.sobj")
+            with open("siav-list.txt","w") as F:
+                F.write("\n" + str(pi.minpoly()))
 print "Done"
 
 
