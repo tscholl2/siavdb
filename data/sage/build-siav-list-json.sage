@@ -28,7 +28,7 @@ def siav_info(f):
         "g": str(g),
         "N": str(ZZ(f(1))),
         "NP": [str(QQ(a)) for a in pari.newtonpoly(f,p)],
-        "AP": [str(QQ(a)) for a in pari.newtonpoly(f,p)].count(0),
+        "AP": [QQ(a) for a in pari.newtonpoly(f,p)].count("0"),
         "OR": [QQ(a) for a in pari.newtonpoly(f,p)].count(0) == g,
         "F": [[str(a) for a in r] for r in Matrix([M*(pi*b).vector() for b in B]).transpose()],
         "V": [[str(a) for a in r] for r in Matrix([M*(pi.conjugate()*b).vector() for b in B]).transpose()],
@@ -45,12 +45,12 @@ def siav_info(f):
 # TODO: read siav-list.json
 #       and skip things done before
 
-arr = load("siav-list.sobj")
+R.<x> = ZZ[]
+arr = [R(f) for f in open("siav-list.txt").readlines()]
 from tqdm import tqdm
 brr = []
 for f in tqdm(arr):
     brr.append(siav_info(f))
 import json
-s = json.dumps(brr)
-with open("siav-list.json","w") as f:
-    f.write(s)
+with open("siav-list.json","w") as F:
+    json.dumps(brr,F)
