@@ -11,9 +11,8 @@ def siav_info(f):
     R.<x> = ZZ[]
     S.<y> = ZZ[]
     g = ZZ(f.degree()/2)
-    p,_ = ZZ(f(0)).perfect_power()
-    a = ZZ(log(f(0),p)/g)
-    q = p^a
+    q = ZZ(f(0)^(1/g))
+    p,a = q.perfect_power()
 
     K0.<pi0> = NumberField(f)
     
@@ -46,8 +45,8 @@ def siav_info(f):
         "AP": [QQ(a) for a in pari.newtonpoly(f,p)].count(0),
         "OR": [QQ(a) for a in pari.newtonpoly(f,p)].count(0) == g,
         "F": [[str(a) for a in r] for r in Matrix([M*(pi*b).vector() for b in B]).transpose()],
-        "V": [[str(a) for a in r] for r in Matrix([M*(pi.conjugate()*b).vector() for b in B]).transpose()],
-        "PP": not ((pi-pi.conjugate()).norm() == 1 and f[g]%(4 if q == 2 else q) == (3 if q == 2 else q-1)),
+        "V": [[str(a) for a in r] for r in Matrix([M*(q/pi*b).vector() for b in B]).transpose()],
+        "PP": not ((pi-q/pi).norm() == 1 and f[g]%(4 if q == 2 else q) == (3 if q == 2 else q-1)),
         # CM Field stuff
         "Kf": str(K.polynomial()),
         "K+f": "y - 1" if F.degree() == 1 else str(F.polynomial()(y)),
