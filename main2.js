@@ -1,86 +1,63 @@
-import { nextSIEC } from "./siec.js";
-import { BigIntMath } from "./math.js";
 import { patch, h } from "./imports.js";
 import { Controller } from "./imports.js";
-
-const w = new Worker("worker.js");
-w.onmessage = e => console.log("MESSAGE RECIEVED", e);
-w.postMessage({ g: "1" });
 
 document.addEventListener("DOMContentLoaded", start);
 
 function start() {
-  const c = new Controller({ search: { g: "4" } });
+  const c = new Controller({ isLoading: true, search: {} });
   const app = App(c.dispatch);
-  c.addListener((s, d) => patch(document.getElementById("app"), app(s)));
+  c.addListener(s => patch(document.getElementById("app"), app(s)));
   window.c = c;
-  c.dispatch(s => ({ ...s, isLoading: true }));
-  // fetch initial data
-  (async function load() {
-    const response = await fetch("data/siav-list.json");
-    const data = await response.json();
-    data.sort(siavComparator);
-    c.dispatch(s => ({ ...s, data, isLoading: false }));
-  })();
+  console.log("starting up");
 }
 
 // VIEWS
 
 function App(dispatch) {
-  const searchForm = Search(dispatch);
-  const loadMore = state => {
+  const w = new Worker("worker.js");
+  w.onmessage = e =>
+    dispatchEvent(new CustomEvent(e.data[0], { detail: e.data }));
+  function callWorker(name, args) {
+    return new Promise(resolve => {
+      const id = `${Math.random()}`;
+      const l = e => {
+        removeEventListener(id, l);
+        resolve(e.detail[1]);
+      };
+      addEventListener(id, l);
+      w.postMessage([id, name, args]);
+    });
+  }
+  const loadMore = async values => {
     dispatch(s => ({ ...s, isLoading: true }));
-    let data = state.data;
-    let q = BigIntMath.max(
-      ...data.filter(A => A["g"] === "1").map(E => BigInt(E["q"]))
-    );
-    // TODO: this should go in webworker
-    for (let i = 0; i < 10; i++) {
-      const e = nextSIEC(q + 1n);
-      data = data.concat(e);
-      q = BigIntMath.max(
-        ...data.filter(A => A["g"] === "1").map(E => BigInt(E["q"]))
-      );
-      data.sort(siavComparator);
-    }
-    dispatch(s => ({ ...s, data, isLoading: false }));
+    const arr = await callWorker("addCurves");
+    const { data, total } = await callWorker("query", values);
+    dispatch(s => ({ ...s, data, total, isLoading: false }));
   };
+  const query = async values => {
+    dispatch(s => ({ ...s, isLoading: true }));
+    // TODO: need ref for search
+    const { data, total } = await callWorker("query", values);
+    dispatch(s => ({ ...s, data, total, isLoading: false }));
+  };
+  const submitSearch = values => {
+    dispatch(s => ({ ...s, search: values }));
+    query(values);
+  };
+  query({ g: 1 });
   return state => {
     const { data = [], isLoading, detail, search } = state;
-    // TODO: this should go in a webworker
-    const filteredData = [];
-    for (let siav of data) {
-      // console.log("looking at ", siav);
-      // console.log("search = ", search);
-      let ok = true;
-      for (let property in search) {
-        // console.log("comparing: ", property);
-        // console.log(search[property]);
-        // console.log(
-        //   search[property] && true,
-        //   `${search[property]}`,
-        //   `${siav[property]}`
-        // );
-        if (search[property] && `${search[property]}` != `${siav[property]}`) {
-          ok = false;
-        }
-      }
-      if (ok) {
-        filteredData.push(siav);
-      }
-      // break;
-    }
     return h("div", null, [
       h("h1", null, "Super-Isolated Abelian Varieties"),
-      searchForm(state),
+      h(Search, { onsubmit: submitSearch, values: search }),
       isLoading
         ? Loading()
         : h(
             "ul",
             null,
-            filteredData.length === 0
+            data.length === 0
               ? EmptyList()
-              : filteredData.map(siav =>
+              : data.map(siav =>
                   h(
                     "li",
                     {
@@ -97,87 +74,85 @@ function App(dispatch) {
                 )
           ),
       !search["q"] && search["g"] === "1"
-        ? h("button", { onclick: () => loadMore(state) }, "More")
+        ? h("button", { onclick: () => loadMore(search) }, "More")
         : null
     ]);
   };
 }
 
-function Search(dispatch) {
-  return ({ search }) => {
-    return h("fieldset", null, [
-      h("legend", null, "Filter"),
-      h(
-        "form",
-        {
-          onsubmit: e => {
-            e.preventDefault();
-            const values = {};
-            for (let el of e.target.elements) {
-              if (el.name && el.value) {
-                values[el.name] = el.value;
-              }
+function Search({ values, onsubmit }) {
+  return h("fieldset", null, [
+    h("legend", null, "Filter"),
+    h(
+      "form",
+      {
+        onsubmit: e => {
+          e.preventDefault();
+          const values = {};
+          for (let el of e.target.elements) {
+            if (el.name && el.value) {
+              values[el.name] = el.value;
             }
-            dispatch(s => ({ ...s, search: values }));
           }
-        },
-        [
-          h("label", null, [
-            h("math-tex", null, "q = "),
-            h("input", {
-              name: "q",
-              type: "text",
-              placeholder: "107",
-              pattern: "\\d+",
-              value: search["q"]
-            })
-          ]),
-          h("br"),
-          h("label", null, [
-            h("math-tex", null, "g = "),
-            h("input", {
-              name: "g",
-              type: "number",
-              min: "1",
-              placeholder: "2",
-              value: search["g"]
-            })
-          ]),
-          h("br"),
-          h("label", null, [
-            "Principally Polarized ",
-            h("select", { name: "PP", value: search["PP"] }, [
-              h("option", { value: "" }, ""),
-              h("option", { value: "true" }, "Yes"),
-              h("option", { value: "false" }, "No")
-            ])
-          ]),
-          h("br"),
-          h("label", null, [
-            "Ordinary ",
-            h("select", { name: "OR", value: search["OR"] }, [
-              h("option", { value: "" }, ""),
-              h("option", { value: "true" }, "Yes"),
-              h("option", { value: "false" }, "No")
-            ])
-          ]),
-          h("br"),
-          h("label", null, [
-            h("math-tex", null, "\\# A(\\mathbb{F}_q) = "),
-            h("input", {
-              name: "N",
-              type: "text",
-              placeholder: "15",
-              pattern: "\\d+",
-              value: search["N"]
-            })
-          ]),
-          h("br"),
-          h("button", { type: "submit" }, "Apply")
-        ]
-      )
-    ]);
-  };
+          onsubmit(values);
+        }
+      },
+      [
+        h("label", null, [
+          h("math-tex", null, "q = "),
+          h("input", {
+            name: "q",
+            type: "text",
+            placeholder: "107",
+            pattern: "\\d+",
+            value: values["q"]
+          })
+        ]),
+        h("br"),
+        h("label", null, [
+          h("math-tex", null, "g = "),
+          h("input", {
+            name: "g",
+            type: "number",
+            min: "1",
+            placeholder: "2",
+            value: values["g"]
+          })
+        ]),
+        h("br"),
+        h("label", null, [
+          "Principally Polarized ",
+          h("select", { name: "PP", value: values["PP"] }, [
+            h("option", { value: "" }, ""),
+            h("option", { value: "true" }, "Yes"),
+            h("option", { value: "false" }, "No")
+          ])
+        ]),
+        h("br"),
+        h("label", null, [
+          "Ordinary ",
+          h("select", { name: "OR", value: values["OR"] }, [
+            h("option", { value: "" }, ""),
+            h("option", { value: "true" }, "Yes"),
+            h("option", { value: "false" }, "No")
+          ])
+        ]),
+        h("br"),
+        h("label", null, [
+          h("math-tex", null, "\\# A(\\mathbb{F}_q) = "),
+          h("input", {
+            name: "N",
+            type: "text",
+            placeholder: "15",
+            pattern: "\\d+",
+            value: values["N"]
+          })
+        ]),
+        h("br"),
+        h("button", { type: "submit" }, "Apply")
+      ]
+    )
+  ]);
 }
 
 function EmptyList() {
@@ -409,52 +384,4 @@ function MoreDetail(siav) {
       )
     ]
   );
-}
-
-/*
-// https://github.com/lodash/lodash/blob/4.17.4/lodash.js#L10554-L10572
-function memoize(func, resolver) {
-  if (
-    typeof func != "function" ||
-    (resolver != null && typeof resolver != "function")
-  ) {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  var memoized = function() {
-    var args = arguments,
-      key = resolver ? resolver.apply(this, args) : args[0],
-      cache = memoized.cache;
-
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    var result = func.apply(this, args);
-    memoized.cache = cache.set(key, result) || cache;
-    return result;
-  };
-  memoized.cache = new Map();
-  return memoized;
-}
-*/
-
-function siavComparator(a, b) {
-  if (BigInt(a["g"]) < BigInt(b["g"])) {
-    return -1;
-  }
-  if (BigInt(a["g"]) > BigInt(b["g"])) {
-    return 1;
-  }
-  if (BigInt(a["q"]) < BigInt(b["q"])) {
-    return -1;
-  }
-  if (BigInt(a["q"]) > BigInt(b["q"])) {
-    return 1;
-  }
-  if (a["f"] < b["f"]) {
-    return -1;
-  }
-  if (a["f"] > b["f"]) {
-    return 1;
-  }
-  return 0;
 }
