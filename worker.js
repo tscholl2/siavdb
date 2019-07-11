@@ -1,8 +1,7 @@
 importScripts("math2.js", "siec2.js");
 const DB = [];
-startWorker();
 
-const methods = { query, addCurves };
+const methods = { query, addCurves, start };
 
 self.onmessage = async function(e) {
   const [id, methodName, methodArgs] = e.data;
@@ -10,14 +9,15 @@ self.onmessage = async function(e) {
   self.postMessage([id, result]);
 };
 
-async function startWorker() {
+async function start() {
   const response = await fetch("data/siav-list.json");
   const data = await response.json();
+  await new Promise(resolve => setTimeout(resolve, 500));
   for (let A of data) {
     DB.push(A);
   }
   DB.sort(siavComparator);
-  self.dispatchEvent(new Event("finishedLoadingDB"));
+  return { length: DB.length };
 }
 
 function addCurves() {
@@ -33,16 +33,11 @@ function addCurves() {
   return arr;
 }
 
-async function query(searchParameters = {}) {
-  if (DB.length === 0) {
-    await new Promise(resolve =>
-      self.addEventListener("finishedLoadingDB", resolve)
-    );
-  }
+function query(searchParameters = {}) {
   const data = [];
   for (let siav of DB) {
     let ok = true;
-    for (let key in searchParameters) {
+    for (let key in siav) {
       const value = searchParameters[key];
       if (value && `${value}` != `${siav[key]}`) {
         ok = false;
@@ -52,9 +47,11 @@ async function query(searchParameters = {}) {
       data.push(siav);
     }
   }
-  const { index = 0, length = 10 } = searchParameters;
+  let { offset = 0, limit = 10 } = searchParameters;
+  offset = parseInt(offset, 10);
+  limit = parseInt(limit, 10);
   return {
-    data: data.slice(index, index + length),
+    data: data.slice(offset, offset + limit),
     total: data.length
   };
 }

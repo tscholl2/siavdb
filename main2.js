@@ -3,79 +3,90 @@ import { Controller } from "./imports.js";
 
 document.addEventListener("DOMContentLoaded", start);
 
-function start() {
-  const c = new Controller({ isLoading: true, search: {} });
+const w = new Worker("worker.js");
+w.onmessage = e =>
+  dispatchEvent(new CustomEvent(e.data[0], { detail: e.data }));
+function callWorker(name, ...args) {
+  return new Promise(resolve => {
+    const id = `${Math.random()}`;
+    const l = e => {
+      removeEventListener(id, l);
+      resolve(e.detail[1]);
+    };
+    addEventListener(id, l);
+    w.postMessage([id, name, args]);
+  });
+}
+
+async function start() {
+  const c = new Controller({});
   const app = App(c.dispatch);
   c.addListener(s => patch(document.getElementById("app"), app(s)));
-  window.c = c;
-  console.log("starting up");
+  c.dispatch(s => ({ ...s, intializing: true }));
+  await callWorker("start");
+  const resp = await callWorker("query");
+  c.dispatch(s => ({ ...s, ...resp }));
+  c.dispatch(s => ({ ...s, intializing: false }));
 }
 
 // VIEWS
 
 function App(dispatch) {
-  const w = new Worker("worker.js");
-  w.onmessage = e =>
-    dispatchEvent(new CustomEvent(e.data[0], { detail: e.data }));
-  function callWorker(name, args) {
-    return new Promise(resolve => {
-      const id = `${Math.random()}`;
-      const l = e => {
-        removeEventListener(id, l);
-        resolve(e.detail[1]);
-      };
-      addEventListener(id, l);
-      w.postMessage([id, name, args]);
-    });
-  }
   const loadMore = async values => {
     dispatch(s => ({ ...s, isLoading: true }));
     const arr = await callWorker("addCurves");
-    const { data, total } = await callWorker("query", values);
-    dispatch(s => ({ ...s, data, total, isLoading: false }));
+    const resp = await callWorker("query", values);
+    console.log("new curves = ", arr);
+    dispatch(s => ({ ...s, ...resp, isLoading: false }));
   };
   const query = async values => {
     dispatch(s => ({ ...s, isLoading: true }));
-    // TODO: need ref for search
-    const { data, total } = await callWorker("query", values);
-    dispatch(s => ({ ...s, data, total, isLoading: false }));
+    const resp = await callWorker("query", values);
+    dispatch(s => ({ ...s, ...resp, isLoading: false }));
   };
   const submitSearch = values => {
     dispatch(s => ({ ...s, search: values }));
     query(values);
   };
-  query({ g: 1 });
   return state => {
-    const { data = [], isLoading, detail, search } = state;
+    const { data = [], total, isLoading, search = {}, intializing } = state;
+    if (intializing) {
+      return h("div", null, ["Loading database...", h("progress")]);
+    }
+    let { offset = 0, limit = 10 } = search;
+    offset = parseInt(offset, 10);
+    limit = parseInt(limit, 10);
     return h("div", null, [
       h("h1", null, "Super-Isolated Abelian Varieties"),
-      h(Search, { onsubmit: submitSearch, values: search }),
+      h(Search, { onsubmit: values => submitSearch(values), values: search }),
       isLoading
         ? Loading()
-        : h(
-            "ul",
-            null,
-            data.length === 0
-              ? EmptyList()
-              : data.map(siav =>
-                  h(
-                    "li",
-                    {
-                      key: siav["id"],
-                      style: "cursor:pointer",
-                      onclick: () =>
-                        dispatch(s => ({
-                          ...s,
-                          detail: detail === siav["id"] ? "" : siav["id"]
-                        }))
-                    },
-                    (detail === siav["id"] ? MoreDetail : LessDetail)(siav)
+        : [
+            `Showing ${offset + 1} - ${offset + limit} of ${total}`,
+            h(
+              "ol",
+              { start: offset + 1 },
+              data.length === 0
+                ? Object.keys(search).length === 0 // poor mans "touched"
+                  ? "Try searching!"
+                  : EmptyList()
+                : data.map(siav =>
+                    h(
+                      "li",
+                      {
+                        key: siav["id"]
+                      },
+                      h("details", null, [
+                        h("summary", null, h(LessDetail, siav)),
+                        h(MoreDetail, siav)
+                      ])
+                    )
                   )
-                )
-          ),
-      !search["q"] && search["g"] === "1"
-        ? h("button", { onclick: () => loadMore(search) }, "More")
-        : null
+            ),
+            !search["q"] && search["g"] === "1"
+              ? h("button", { onclick: () => loadMore(search) }, "More")
+              : null
+          ]
     ]);
   };
 }
@@ -149,7 +160,29 @@ function Search({ values, onsubmit }) {
           })
         ]),
         h("br"),
-        h("button", { type: "submit" }, "Apply")
+        h("label", null, [
+          "Offset",
+          h("input", {
+            name: "offset",
+            type: "number",
+            min: "0",
+            placeholder: "0",
+            value: values["offset"]
+          })
+        ]),
+        h("br"),
+        h("label", null, [
+          "Limit",
+          h("input", {
+            name: "limit",
+            type: "number",
+            min: "0",
+            placeholder: "10",
+            value: values["limit"]
+          })
+        ]),
+        h("br"),
+        h("button", { type: "submit" }, "Search")
       ]
     )
   ]);
