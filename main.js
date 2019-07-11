@@ -34,13 +34,12 @@ async function start() {
 function App(dispatch) {
   const loadMore = async values => {
     dispatch(s => ({ ...s, isLoading: true }));
-    const arr = await callWorker("addCurves");
+    await callWorker("addCurves");
     const resp = await callWorker("query", values);
     dispatch(s => ({
       ...s,
       ...resp,
-      isLoading: false,
-      recentlyAdded: arr.length
+      isLoading: false
     }));
   };
   const query = async values => {
@@ -59,7 +58,6 @@ function App(dispatch) {
       isLoading,
       detail,
       search = {},
-      recentlyAdded,
       intializing
     } = state;
     if (intializing) {
@@ -78,13 +76,6 @@ function App(dispatch) {
               "h3",
               { key: "total" },
               `Showing ${offset + 1} - ${offset + limit} of ${total}`
-            ),
-            h(
-              "span",
-              { key: "new" },
-              recentlyAdded
-                ? `You just computed another ${recentlyAdded} curves!`
-                : undefined
             ),
             h(
               "ol",
