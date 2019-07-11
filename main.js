@@ -114,7 +114,11 @@ function App(dispatch) {
                           h(LessDetail, siav)
                         ),
                         detail === siav["id"] &&
-                          h("div", { key: "details" }, h(MoreDetail, siav))
+                          h(
+                            "div",
+                            { key: "details", style: "margin-top: 10px;" },
+                            h(MoreDetail, siav)
+                          )
                       ]
                     )
                   )
