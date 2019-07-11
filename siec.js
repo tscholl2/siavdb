@@ -1,4 +1,19 @@
-import { BigIntMath } from "./math.js";
+/**
+ *
+ * @param {BigInt} M
+ * @returns {Array}
+ */
+function nextSIEC(M) {
+  const arr = nextORSIEC(M);
+  const brr = nextSSSIEC(M);
+  if (BigInt(arr[0]["q"]) < BigInt(brr[0]["q"])) {
+    return arr;
+  }
+  if (BigInt(arr[0]["q"]) > BigInt(brr[0]["q"])) {
+    return brr;
+  }
+  return arr.concat(brr);
+}
 
 /**
  * Given the trace t and prime power q for a SIEC,
@@ -43,23 +58,6 @@ function siecData(t, q) {
     Kdeg: "2",
     "K+deg": "1"
   };
-}
-
-/**
- *
- * @param {BigInt} M
- * @returns {Array}
- */
-export function nextSIEC(M) {
-  const arr = nextORSIEC(M);
-  const brr = nextSSSIEC(M);
-  if (BigInt(arr[0]["q"]) < BigInt(brr[0]["q"])) {
-    return arr;
-  }
-  if (BigInt(arr[0]["q"]) > BigInt(brr[0]["q"])) {
-    return brr;
-  }
-  return arr.concat(brr);
 }
 
 /**

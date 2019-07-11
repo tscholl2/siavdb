@@ -1,4 +1,4 @@
-importScripts("math2.js", "siec2.js");
+importScripts("math.js", "siec.js");
 const DB = [];
 
 const methods = { query, addCurves, start };
@@ -21,16 +21,20 @@ async function start() {
 }
 
 function addCurves() {
-  const q = BigIntMath.max.apply(
-    null,
-    DB.filter(A => A["g"] === "1").map(A => BigInt(A["q"]))
-  );
-  const arr = nextSIEC(q + 1n);
-  for (let A of arr) {
-    DB.push(A);
+  const brr = [];
+  for (let i = 0; i < 100; i++) {
+    const q = BigIntMath.max.apply(
+      null,
+      DB.filter(A => A["g"] === "1").map(A => BigInt(A["q"]))
+    );
+    const arr = nextSIEC(q + 1n);
+    for (let A of arr) {
+      DB.push(A);
+      brr.push(A);
+    }
+    DB.sort(siavComparator);
   }
-  DB.sort(siavComparator);
-  return arr;
+  return brr;
 }
 
 function query(searchParameters = {}) {

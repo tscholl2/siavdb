@@ -1,4 +1,4 @@
-export class BigIntMath {
+class BigIntMath {
     // Some methods from:
     // https://golb.hplar.ch/2018/09/javascript-bigint.html
     /**
@@ -53,7 +53,7 @@ export class BigIntMath {
      */
     static max(...values) {
         if (values.length === 0) {
-            throw Error("max of empty set");
+            throw new Error("set must be nonempty");
         }
         let max = values[0];
         for (let i = 1; i < values.length; i++) {
