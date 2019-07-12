@@ -396,7 +396,7 @@ function MoreDetail(siav) {
           null,
           h(
             "math-tex",
-            null,
+            { dislay: true },
             `V = \\begin{bmatrix} ${siav["V"]
               .map(r => `${r.map(c => `${c}`).join(" & ")}`)
               .join(" \\\\ ")} \\end{bmatrix}`

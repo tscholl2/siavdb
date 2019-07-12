@@ -11,11 +11,48 @@ export const { h, patch } = eval(
 import * as _ from "https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.js";
 // https://github.com/justinfagnani/katex-elements/blob/master/katex-inline.js
 // (modified)
+
+const w = new Worker(
+  window.URL.createObjectURL(
+    new Blob([
+      `
+importScripts("https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.js");
+function render(s) {
+  return katex.renderToString(s);
+}
+const methods = { render };
+self.onmessage = function(e) {
+  const [id, methodName, methodArgs] = e.data;
+  const result = methods[methodName].apply(null, methodArgs);
+  self.postMessage([id, result]);
+};
+`
+    ]),
+    { type: "text/javascript" }
+  )
+);
+w.onmessage = e =>
+  dispatchEvent(new CustomEvent(e.data[0], { detail: e.data }));
+function callWorker(name, ...args) {
+  return new Promise(resolve => {
+    const id = `${Math.random()}`;
+    const l = e => {
+      removeEventListener(id, l);
+      resolve(e.detail[1]);
+    };
+    addEventListener(id, l);
+    w.postMessage([id, name, args]);
+  });
+}
+
 export class KatexElement extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this.lastRendered = {};
+  }
+  static get observedAttributes() {
+    return ["display"];
   }
   connectedCallback() {
     const displayStyle = this.getAttribute("display");
@@ -26,7 +63,7 @@ export class KatexElement extends HTMLElement {
     ) {
       return;
     }
-    this.lastRendered = { tex, displayStyle };
+    this.lastRendered.displayMode = displayStyle;
     const container = displayStyle ? "div" : "span";
     this.shadowRoot.innerHTML = `
         <style>
@@ -40,16 +77,16 @@ export class KatexElement extends HTMLElement {
           integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j"
           crossorigin="anonymous"
         />
-        <${container}></${container}>
+        <${container}><progress/></${container}>
       `;
     this._container = this.shadowRoot.querySelector(container);
-    if (katex) {
-      katex.render(this.textContent, this._container, {
-        displayMode: this.getAttribute("display")
-      });
-    } else {
-      // TODO: fallback
-    }
+    callWorker("render", tex).then(result => {
+      if (tex === this.lastRendered.tex) {
+        return;
+      }
+      this.lastRendered.tex = tex;
+      this._container.innerHTML = result;
+    });
   }
 }
 customElements.define("math-tex", KatexElement);
