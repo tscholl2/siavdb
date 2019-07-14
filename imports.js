@@ -77,7 +77,7 @@ export class KatexElement extends HTMLElement {
           integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j"
           crossorigin="anonymous"
         />
-        <${container}><progress/></${container}>
+        <${container}><code>${tex}</code></${container}>
       `;
     this._container = this.shadowRoot.querySelector(container);
     callWorker("render", tex).then(result => {

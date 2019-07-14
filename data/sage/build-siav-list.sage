@@ -36,5 +36,8 @@ for f in tqdm(data,desc="CM Fields"):
         if pi not in siavlist and ZZ(pi*pi.conjugate()).is_pseudoprime_power():
             siavlist.add(pi.minpoly())
             with open("siav-list.txt","a") as F:
-                F.write("\n"+str(pi.minpoly()))
+                if len(siavlist) == 1:
+                    F.write(str(pi.minpoly()))
+                else:
+                    F.write("\n"+str(pi.minpoly()))
 print "Done"
