@@ -63,11 +63,11 @@ function App(dispatch) {
     if (intializing) {
       return h("div", null, ["Loading database...", h("progress")]);
     }
-    const offset = parseInt(search.offset, 10);
-    const limit = Math.max(parseInt(search.limit, 10), total);
+    const offset = parseInt(search.offset || 0, 10);
+    const limit = data.length;
     return h("div", null, [
       h("h1", null, "Super-Isolated Abelian Varieties"),
-      h(Search, { onsubmit: values => submitSearch(values), values: search }),
+      h(Search, { onsubmit: submitSearch, values: search }),
       isLoading
         ? Loading()
         : [
