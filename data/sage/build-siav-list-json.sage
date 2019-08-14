@@ -87,12 +87,12 @@ def siav_info_not_simple(f,simple_info):
                 Matrix([[ZZ(a) for a in row] for row in D["V"]])
                 for D in components
         ])],
-        "PP": all(D["PP"] for D in components), # TODO: check this
+        "PP": all(D["PP"] for D in components), # TODO: This only works for squarefree prob
         # CM Field stuff
         "Kf": str(prod(R(D["Kf"]) for D in components)),
         "K+f": str(prod(S(D["K+f"]) for D in components)),
-        "Kdisc": str("???"), # TODO
-        "K+disc": str("???"),
+        "Kdisc": str(prod(ZZ(D["Kdisc"]) for D in components)),
+        "K+disc": str(prod(ZZ(D["K+disc"]) for D in components)),
         "Kdeg": str(sum(ZZ(D["Kdeg"]) for D in components)),
         "K+deg": str(sum(ZZ(D["K+deg"]) for D in components)),
     }
