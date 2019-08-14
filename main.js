@@ -70,6 +70,8 @@ function App(dispatch) {
       h(Search, { onsubmit: submitSearch, values: search }),
       isLoading
         ? Loading()
+        : total === 0
+        ? h("h3", null, "No results found :(")
         : [
             h(
               "h3",
@@ -86,7 +88,7 @@ function App(dispatch) {
                 : data.map(siav =>
                     h(
                       "li",
-                      { key: siav["id"], style: "margin:15px 0 15px 0;" },
+                      { key: siav["id"], style: "margin:20px 0;" },
                       [
                         h(
                           "span",
@@ -189,7 +191,7 @@ function Search({ values, onsubmit }) {
         ]),
         h("br"),
         h("label", null, [
-          h("math-tex", null, "\\# A(\\mathbb{F}_q) = "),
+          h("math-tex", null, "\\# A(\\mathbb{F}_q) = ")," ",
           h("input", {
             name: "N",
             type: "text",
@@ -200,7 +202,7 @@ function Search({ values, onsubmit }) {
         ]),
         h("br"),
         h("label", null, [
-          "Offset",
+          "Offset ",
           h("input", {
             name: "offset",
             type: "number",
@@ -211,7 +213,7 @@ function Search({ values, onsubmit }) {
         ]),
         h("br"),
         h("label", null, [
-          "Limit",
+          "Limit ",
           h("input", {
             name: "limit",
             type: "number",
