@@ -59,6 +59,7 @@ def siav_info_simple(f):
 
 def siav_info_not_simple(f,simple_info):
     components = [next(D for D in simple_info if D["f"] == str(fi)) for fi,_ in f.factor()]
+    assert max(k for _,k in f.factor())==1, "Not squarefree: %s"%f
     D0 = components[0]
     p,a,q = D0["p"],D0["a"],D0["q"]
     R.<x> = QQ[]
