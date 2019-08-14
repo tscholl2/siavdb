@@ -48,7 +48,7 @@ function App(dispatch) {
     dispatch(s => ({ ...s, ...resp, isLoading: false }));
   };
   const submitSearch = values => {
-    dispatch(s => ({ ...s, search: values }));
+    dispatch(s => ({ ...s, search: values, detail: null }));
     query(values);
   };
   return state => {
@@ -180,6 +180,15 @@ function Search({ values, onsubmit }) {
         ]),
         h("br"),
         h("label", null, [
+          "Simple ",
+          h("select", { name: "S", value: values["S"] }, [
+            h("option", { value: "" }, ""),
+            h("option", { value: "true" }, "Yes"),
+            h("option", { value: "false" }, "No")
+          ])
+        ]),
+        h("br"),
+        h("label", null, [
           h("math-tex", null, "\\# A(\\mathbb{F}_q) = "),
           h("input", {
             name: "N",
@@ -245,6 +254,7 @@ function LessDetail(siav) {
  *   p: "2",
  *   a: "1",
  *   q: "2",
+ *   S: true,
  *   g: "1",
  *   AP: "0",
  *   F: [["0", "1"], ["-2", "2"]],
@@ -345,6 +355,8 @@ function MoreDetail(siav) {
         null,
         h("td", null, h("math-tex", null, `\\dim A = ${siav["g"]}`))
       ),
+      h("tr", null, h("th", null, "Simple")),
+      h("tr", null, h("td", null, siav["S"] ? "Yes" : "No")),
       h("tr", null, h("th", null, "Number of Points")),
       h(
         "tr",
@@ -359,7 +371,7 @@ function MoreDetail(siav) {
       h(
         "tr",
         null,
-        h("td", null, ["Slopes:", h("math-tex", null, `${siav["NP"]}`)])
+        h("td", null, ["Slopes: ", h("math-tex", null, `${siav["NP"]}`)])
       ),
       h("tr", null, h("th", null, "Ordinary")),
       h("tr", null, h("td", null, `${siav["OR"] ? "Yes" : "No"}`)),

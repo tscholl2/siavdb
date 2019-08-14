@@ -34,5 +34,6 @@ for q in tqdm(sorted(simple.keys()),desc="Finding Products"):
             if f not in arr and f not in siavlist:
                 arr.append(f)
 
-with open("siav-list.txt","a") as F:
-    F.write("\n" + "\n".join([str(f) for f in arr]))
+if len(arr) > 0:
+    with open("siav-list.txt","a") as F:
+        F.write("\n" + "\n".join([str(f) for f in arr]))

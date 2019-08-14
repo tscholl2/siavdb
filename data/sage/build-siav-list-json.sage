@@ -7,7 +7,7 @@ try:
 except IOError:
     previous_json = []
 
-def siav_info(f):
+def siav_info_simple(f):
     R.<x> = ZZ[]
     S.<y> = ZZ[]
     g = ZZ(f.degree()/2)
@@ -39,10 +39,11 @@ def siav_info(f):
         "q": str(q),
         "croots": [str(z) for z,_ in f.roots(ring=CC)],
         # AV stuff
+        "S": True,
         "g": str(g),
         "N": str(ZZ(f(1))),
         "NP": [str(QQ(a)) for a in pari.newtonpoly(f,p)],
-        "AP": [QQ(a) for a in pari.newtonpoly(f,p)].count(0),
+        "AP": str([QQ(a) for a in pari.newtonpoly(f,p)].count(0)),
         "OR": [QQ(a) for a in pari.newtonpoly(f,p)].count(0) == g,
         "F": [[str(a) for a in r] for r in Matrix([M*(pi*b).vector() for b in B]).transpose()],
         "V": [[str(a) for a in r] for r in Matrix([M*(q/pi*b).vector() for b in B]).transpose()],
@@ -56,14 +57,56 @@ def siav_info(f):
         "K+deg": str(F.degree()),
     }
 
-# TODO: read siav-list.json
-#       and skip things done before
+def siav_info_not_simple(f,simple_info):
+    components = [next(D for D in simple_info if D["f"] == str(fi)) for fi,_ in f.factor()]
+    D0 = components[0]
+    p,a,q = D0["p"],D0["a"],D0["q"]
+    R.<x> = QQ[]
+    S.<y> = QQ[]
+    return {
+        # Meta stuff
+        "id": hashlib.sha256(",".join(map(str,f.coefficients(sparse=False)))).hexdigest(),
+        # Weil number stuff
+        "f": str(f.factor()),
+        "p": D0["p"],
+        "a": D0["a"],
+        "q": D0["q"],
+        "croots": [str(z) for z in flatten([[z for z,_ in fi.roots(ring=CC)] for fi,_ in f.factor()])],
+        # AV stuff
+        "S": False,
+        "g": str(sum(fi.degree()*k for fi,k in f.factor())),
+        "N": str(ZZ(f(1))),
+        "NP": [str(QQ(a)) for a in pari.newtonpoly(f,p)],
+        "AP": str([QQ(a) for a in pari.newtonpoly(f,p)].count(0)),
+        "OR": all(D["OR"] for D in components),
+        "F": [[str(a) for a in r] for r in reduce(lambda p,n: p.block_sum(n),[
+                Matrix([[ZZ(a) for a in row] for row in D["F"]])
+                for D in components
+        ])],
+        "V": [[str(a) for a in r] for r in reduce(lambda p,n: p.block_sum(n),[
+                Matrix([[ZZ(a) for a in row] for row in D["V"]])
+                for D in components
+        ])],
+        "PP": all(D["PP"] for D in components), # TODO: check this
+        # CM Field stuff
+        "Kf": str(prod(R(D["Kf"]) for D in components)),
+        "K+f": str(prod(S(D["K+f"]) for D in components)),
+        "Kdisc": str("???"), # TODO
+        "K+disc": str("???"),
+        "Kdeg": str(sum(ZZ(D["Kdeg"]) for D in components)),
+        "K+deg": str(sum(ZZ(D["K+deg"]) for D in components)),
+    }
+
 
 R.<x> = ZZ[]
 arr = [R(f) for f in open("siav-list.txt").readlines()]
 from tqdm import tqdm
 brr = []
-for f in tqdm(arr):
-    brr.append(siav_info(f))
+for f in tqdm(arr,"Simple"):
+    if f.is_irreducible():
+        brr.append(siav_info_simple(f))
+for f in tqdm(arr,"Not simple"):
+    if not f.is_irreducible():
+        brr.append(siav_info_not_simple(f,brr))
 with open("siav-list.json","w") as F:
     json.dump(brr,F)
