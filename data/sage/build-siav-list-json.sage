@@ -7,6 +7,9 @@ try:
 except IOError:
     previous_json = []
 
+def id(f):
+    hashlib.sha256(",".join(map(str,f.coefficients(sparse=False)))).hexdigest()
+
 def siav_info_simple(f):
     R.<x> = ZZ[]
     S.<y> = ZZ[]
@@ -31,7 +34,7 @@ def siav_info_simple(f):
 
     return {
         # Meta stuff
-        "id": hashlib.sha256(",".join(map(str,f.coefficients(sparse=False)))).hexdigest(),
+        "id": id(f),
         # Weil number stuff
         "f": str(f),
         "p": str(p),
@@ -66,7 +69,7 @@ def siav_info_not_simple(f,simple_info):
     S.<y> = QQ[]
     return {
         # Meta stuff
-        "id": hashlib.sha256(",".join(map(str,f.coefficients(sparse=False)))).hexdigest(),
+        "id": id(f),
         # Weil number stuff
         "f": str(f.factor()),
         "p": D0["p"],
@@ -75,7 +78,7 @@ def siav_info_not_simple(f,simple_info):
         "croots": [str(z) for z in flatten([[z for z,_ in fi.roots(ring=CC)] for fi,_ in f.factor()])],
         # AV stuff
         "S": False,
-        "g": str(sum(fi.degree()*k for fi,k in f.factor())),
+        "g": str(sum(fi.degree()*k/2 for fi,k in f.factor())),
         "N": str(ZZ(f(1))),
         "NP": [str(QQ(a)) for a in pari.newtonpoly(f,p)],
         "AP": str([QQ(a) for a in pari.newtonpoly(f,p)].count(0)),
