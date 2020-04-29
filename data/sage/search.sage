@@ -6,7 +6,7 @@ def wg_find_T(F):
     { eta : O_F = Z[eta] } / (eta_1 ~ eta_2 <=> eta_1 - eta_2 in Z)
     """
     if F.degree() == 1:
-        return [F(1)]
+        return [F(0)]
     if F.degree() == 2:
         return ((F.disc() + sqrt(F.disc()))/2).minpoly().roots(ring=F,multiplicities=False)
     for F2,gens in indexforms:
@@ -23,7 +23,7 @@ def wg_find_gamma(K):
     Given a CM field K, returns gamma such that O_K = O_F[gamma].
     """
     if K.degree() == 2:
-        return ((K.disc() + sqrt(K.disc()))/2).minpoly().roots(ring=K,multiplicities=False)
+        return ((K.disc() + sqrt(K.disc()))/2).minpoly().any_root(ring=K)
     F,iota = K.maximal_totally_real_subfield()
     L.<b> = K.relativize(iota)
     assert gen_to_sage(pari_gen.rnfbasis(F.pari_bnf(),L.relative_polynomial())[0]) == [1,0]
