@@ -18,7 +18,7 @@ def siav_info_simple(f):
     p,a = q.perfect_power()
 
     K0.<pi0> = NumberField(f)
-    
+
     try:
         prev = next(d for d in previous_json if d["f"] == str(f))
         K.<Pii> = NumberField(R(str(prev["Kf"])))
@@ -47,7 +47,7 @@ def siav_info_simple(f):
         "N": str(ZZ(f(1))),
         "NP": [str(QQ(a)) for a in pari.newtonpoly(f,p)],
         "AP": str([QQ(a) for a in pari.newtonpoly(f,p)].count(0)),
-        "OR": [QQ(a) for a in pari.newtonpoly(f,p)].count(0) == g,
+        "OR": [QQ(a) for a in pari.newtonpoly(f,p)].count(0) == g, # Equiv: middle coefficient not div by p, Def.~3.1 Howe 1995
         "F": [[str(a) for a in r] for r in Matrix([M*(pi*b).vector() for b in B]).transpose()],
         "V": [[str(a) for a in r] for r in Matrix([M*(q/pi*b).vector() for b in B]).transpose()],
         "PP": not ((pi-q/pi).norm() == 1 and f[g]%(4 if q == 2 else q) == (3 if q == 2 else q-1)),
