@@ -28,18 +28,23 @@ def wg_find_gamma(K):
     """
     Given a CM field K, returns gamma such that O_K = O_F[gamma].
     """
-    if K.degree() == 2:
-        return ((K.disc() + sqrt(K.disc()))/2).minpoly().any_root(ring=K)
     F,iota = K.maximal_totally_real_subfield()
+    if F == QQ:
+        R.<x> = ZZ[]
+        F = NumberField(x-1,"a0")
+        iota = F.embeddings(K)[0]
     L.<b> = K.relativize(iota)
-    assert gen_to_sage(pari_gen.rnfbasis(F.pari_bnf(),L.relative_polynomial())[0]) == [1,0]
-    v = map(gen_to_sage,pari_gen.rnfbasis(F.pari_bnf(),L.relative_polynomial())[1])
-    v = map(lambda z: z if type(z) is list else [z,0],v)
-    B1 = map(lambda z: gen_to_sage(z,locals={"y":F.gen()}),F.pari_zk()) # pari integral basis for O_F
-    gamma = L.embeddings(K)[0](sum(sum(ci*di*bi for ci,di in zip(vi,B1)) for vi,bi in zip(v,[1,b])))
+    pari_to_F = lambda polmod: gen_to_sage(polmod,locals={"y":F.gen()})
+    F_zk = [pari_to_F(b) for b in F.pari_zk()]
+    B = pari.rnfbasis(F.pari_bnf(),L.defining_polynomial())
+    B = [[pari_to_F(pari.centerlift(pari.nfbasistoalg(F.pari_nf(),b))) for b in Bi] for Bi in B]
+    B = [K(b[0] + b[1]*L.0) for b in B]
+    assert B[0] == 1
+    gamma = B[1]
+    # double check
     B = flatten([[iota(bi),gamma*iota(bi)] for bi in F.ring_of_integers().basis()])
     assert all(bi in K.ring_of_integers() for bi in B)
-    assert K.discriminant() == Matrix([[K(bi*bj).trace(QQ) for bi in B] for bj in B]).det()
+    assert K.discriminant() == Matrix([[K(bi*bj).trace() for bi in B] for bj in B]).det()
     return gamma
 
 def wg_search(K,M=10):
