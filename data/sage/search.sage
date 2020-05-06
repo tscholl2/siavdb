@@ -87,40 +87,57 @@ def wg_search(K,M=10):
         assert alpha*alpha.conjugate() in ZZ
         yield alpha
 
-def wg_search_by_height(K):
+def wg_search_by_height(K,M=10):
     """
-    Given a CM field K and bound M, this searches for all Weil generators in K.
-    It tries to search by height.
-    Not proven, but should be close.
+    Given a CM field K and bound M, this searches for all Weil generators in K
+    up to a height of M.
     """
     if K.degree() == 2:
         omega = wg_find_gamma(K)
-        for a in NN: # NN = NonNegativeIntegers()
-            for b in [a+omega,a+omega.conjugate(),-a+omega,-a+omega.conjugate()]:
-                yield b
-    F,iota = K.maximal_totally_real_subfield()
-    g = F.degree()
-    T = [iota(eta) for eta in wg_find_T(F)]
-    gamma = wg_find_gamma(K)
-    U = (
-        z*u
-        for u in (
-            prod(u^e for u,e in zip(F.units(),[i/2 if i%2==0 else -(i+1)/2 for i in v]))
-            for n in NN
-            for v in IntegerVectors(n,g-1)
-        )
-        for z in [-1,1] # = F.roots_of_units() because F totally real
-    )
-    V,K_from_V,K_to_V = K.vector_space()
-    # A[eta] is the matrix which takes a vector in V which lies in the image of F
-    # and writes it with respect to the basis 1,eta,eta^2
-    A = {eta: Matrix([K_to_V(eta^i) for i in range(g)]).transpose().pseudoinverse() for eta in T}
-    for u,eta in cartesian_product_iterator([U,T]):
-        Omega = (iota(u)*(gamma-gamma.conjugate()) + eta)/2
-        a = A[eta]*K_to_V(Omega*Omega.conjugate())
-        alpha = -a[1] + Omega
-        if not (all(i == 0 for i in a[2:]) and alpha in K.ring_of_integers()):
-            continue
-        assert K.order([alpha,alpha.conjugate()]).is_maximal() == 1
-        assert alpha*alpha.conjugate() in ZZ
-        yield alpha
+        past_max = 0
+        for a in [0..M]:
+            yield from [b for b in [a+omega,-a+omega,a+omega.conjugate(),-a+omega.conjugate()] if b.norm() < M]
+            if (a + omega).norm() > M:
+                past_max += 1
+            if past_max > 100: # TODO: check
+                return
+    elif K.degree() == 4:
+        gamma = wg_find_gamma(K)
+        F,iota = K.maximal_totally_real_subfield()
+        T = [iota(eta) for eta in wg_find_T(F)]
+        V,K_from_V,K_to_V = K.vector_space()
+        # A[eta] is the matrix which takes a vector in V which lies in the image of F
+        # and writes it with respect to the basis 1,eta,eta^2
+        A = {
+            eta: Matrix([
+                K_to_V(eta^i) for i in range(2)
+            ]).transpose().pseudoinverse() for eta in T
+        }
+        def check(u):
+            eta = T[0]
+            Omega = (u*(gamma-gamma.conjugate()) + eta)/2
+            a = A[eta]*K_to_V(Omega*Omega.conjugate())
+            alpha = -a[1] + Omega
+            if not (all(i == 0 for i in a[2:]) and alpha in K.ring_of_integers()):
+                return []
+            return [alpha,-alpha,alpha.conjugate(),-alpha.conjugate()]
+        eps = iota(F.units()[0])
+        OK = K.ring_of_integers()
+        I = K.ideal(4)
+        m = next(k for k in [0..255] if I.reduce(eps)^k == 1)
+        if not any(check(eps^k) != [] for k in [0..m+1]):
+            # See lemma 5.6 of scholl2018super
+            return
+        else:
+            past_max = 0
+            for k in [0..M]:
+                for u in [eps^k,eps^(-k)] if k > 0 else [1]:
+                    for a in check(u):
+                        if ZZ(a*a.conjugate()) < M:
+                            yield a
+                        else:
+                            past_max += 1
+                if past_max > 500: # TODO: check
+                    return
+    else:
+        raise NotImplementedError
