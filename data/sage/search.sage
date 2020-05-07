@@ -12,14 +12,24 @@ def wg_find_T(F):
     { eta : O_F = Z[eta] } / (eta_1 ~ eta_2 <=> eta_1 - eta_2 in Z)
     """
     if F.degree() == 1:
-        return [F(0)]
-    if F.degree() == 2:
-        return ((F.disc() + sqrt(F.disc()))/2).minpoly().roots(ring=F,multiplicities=False)
-    for F2,gens in indexforms:
-        if F2.is_isomorphic(F):
-            phi = F2.embeddings(F)[0]
-            return [phi(a) for a in gens]
-    raise Exception("unimplemented: %s" % F)
+        T = [F(0)]
+    elif F.degree() == 2:
+        T = ((F.disc() + sqrt(F.disc()))/2).minpoly().roots(ring=F,multiplicities=False)
+    else:
+        for F2,gens in indexforms:
+            if F2.is_isomorphic(F):
+                phi = F2.embeddings(F)[0]
+                T1 = [phi(a) for a in gens]
+                T = []
+                while len(T1) > 0:
+                    a = T1.pop()
+                    if not any(b-a in ZZ for b in T):
+                        T.append(a)
+        else:
+            raise Exception("unimplemented: %s" % F)
+    assert all(F.order([a]).is_maximal() for a in T)
+    assert all(a-b not in ZZ for a,b in Subsets(T,k=2))
+    return T
 
 
 from sage.libs.pari.convert_sage import gen_to_sage
