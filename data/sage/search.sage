@@ -25,6 +25,7 @@ def wg_find_T(F):
                     a = T1.pop()
                     if not any(b-a in ZZ for b in T):
                         T.append(a)
+                break
         else:
             raise Exception("unimplemented: %s" % F)
     assert all(F.order([a]).is_maximal() for a in T)
