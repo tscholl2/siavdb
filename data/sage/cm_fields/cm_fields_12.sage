@@ -1,7 +1,7 @@
 # Tweleve CM fields with class number 1
 # From LMFDB - 7/5/19
 
-data = [
+[
  x^12 - x^11 + x^9 - x^8 + x^6 - x^4 + x^3 - x + 1,
  x^12 - x^10 + x^8 - x^6 + x^4 - x^2 + 1,
  x^12 - x^6 + 1,

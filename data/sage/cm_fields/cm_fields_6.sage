@@ -1,6 +1,6 @@
 # Sextic CM fields with class number 1
 
-data = [
+[
     # LMFDB
     x^6 - x^5 + x^4 - x^3 + x^2 - x + 1,
     x^6 - x^3 + 1,

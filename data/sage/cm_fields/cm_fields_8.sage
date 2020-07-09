@@ -1,7 +1,7 @@
 # Octic CM fields with class number 1
 # From LMFDB - 6/23/19
 
-data = [
+[
  x^8 - x^7 + x^5 - x^4 + x^3 - x + 1,
  x^8 - x^6 + x^4 - x^2 + 1,
  x^8 - x^4 + 1,

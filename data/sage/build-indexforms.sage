@@ -4,10 +4,10 @@ def run(F):
     { eta : O_F = Z[eta] } / (eta_1 ~ eta_2 <=> eta_1 - eta_2 in Z)
     """
     if F.degree() == 1:
-        return [1]
+        return [F(0)]
     if F.degree() == 2:
         return ((F.disc() + sqrt(F.disc()))/2).minpoly().roots(ring=F,multiplicities=False)
-    s = magma_free.eval("""
+    s = magma.eval("""
         R<x> := PolynomialRing(RationalField());
         f := %s;
         O := MaximalOrder(f);
@@ -18,7 +18,8 @@ def run(F):
     try:
         arr = eval(preparse(s.replace("$.1","x")))
     except Exception as e:
-        print "ERROR: ", s.replace("$.1","x")
+        print("ERROR: ", s.replace("$.1","x"))
+        print(s)
         raise e
     arr = set(flatten([g.roots(ring=F,multiplicities=False) for g in arr]))
     arr = set(flatten([[a,-a] for a in arr]))
@@ -38,14 +39,11 @@ except IOError:
     indexforms = []
 
 from tqdm import tqdm
-for F,gens in tqdm(indexforms,desc="Testing..."):
-    assert all(F.order([a]).is_maximal() for a in gens), F
+#for F,gens in tqdm(indexforms,desc="Testing..."):
+#    assert all(F.order([a]).is_maximal() for a in gens), F
 
-load("cm-fields-8.sage")
-
-print "Collecting new data"
-for f in tqdm(data):
-    K.<a> = NumberField(f)
+load("cm-fields.sage")
+for K in tqdm(CM_FIELDS[8]):
     F,_ = K.maximal_totally_real_subfield()
     if any(F2.is_isomorphic(F) for F2,_ in indexforms):
         continue
