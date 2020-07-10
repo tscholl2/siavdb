@@ -40,6 +40,7 @@ class SimpleSIAV:
 
 class SIAV:
     def __init__(self,f: Polynomial):
+        assert ZZ(f(0)).is_pseudoprime_power()
         self.f = f
         self.id = id(f)
         self.components = [(SimpleSIAV(h),k) for h,k in f.factor()]
@@ -48,7 +49,7 @@ class SIAV:
             A1.q == A2.q
             and
             A1.beta.minpoly().resultant(A2.beta.minpoly())^2 == 1
-            for [_,A1],[_,A2] in Subsets(self.components,2)
+            for [A1,_],[A2,_] in Subsets(self.components,2)
         )
         self.is_simple = len(self.components) == 1 and self.components[0][1] == 1
 
@@ -56,30 +57,36 @@ class SIAV:
         A = self
         return {
             "id": A.id,
-            "q": A.components[0][0].q,
-            "a": A.components[0][0].a,
-            "p": A.components[0][0].p,
-            "g": sum(B.g for B,_ in A.components),
+            "f": str(A.f),
+            "h": str(prod(B.beta.minpoly()^k for B,k in A.components)),
+            "q": str(A.components[0][0].q),
+            "a": str(A.components[0][0].a),
+            "p": str(A.components[0][0].p),
+            "g": str(sum(B.g for B,_ in A.components)),
             "simple": A.is_simple,
+            "is_principally_polarized": all(B.is_principally_polarized for B,_ in A.components),
+            "DeltaK": str(prod(B.K.discriminant() for B,_ in A.components)),
+            "DeltaK+": str(prod(B.F.discriminant() for B,_ in A.components)),
             "components": [
                 {
-                    "exponent": k,
+                    "exponent": str(k),
                     "id": B.id,
-                    "f": B.pi.minpoly(),
-                    "h": B.beta.minpoly(),
-                    "g": B.g,
-                    "q": B.q,
-                    "p": B.p,
-                    "croots": B.croots,
-                    "newton_polygon": B.newton_polygon,
+                    "f": str(B.pi.minpoly()),
+                    "h": str(B.beta.minpoly()),
+                    "g": str(B.g),
+                    "a": str(B.a),
+                    "p": str(B.p),
+                    "q": str(B.q),
+                    "croots": [str(z) for z in B.croots],
+                    "newton_polygon": [str(a) for a in B.newton_polygon],
                     "is_ordinary": B.is_ordinary,
                     "frobenius_matrix": [[str(a) for a in r] for r in B.frobenius_matrix],
                     "verschiebung_matrix": [[str(a) for a in r] for r in B.verschiebung_matrix],
                     "is_principally_polarized": B.is_principally_polarized,
                     "K": str(B.K.polynomial()),
                     "K+": "y - 1" if B.F.degree() == 1 else str(B.F.polynomial()).replace("x","y"),
-                    "DeltaK": B.K.discriminant(),
-                    "DeltaF": B.F.discriminant(),
+                    "DeltaK": str(B.K.discriminant()),
+                    "DeltaK+": str(B.F.discriminant()),
                 }
                 for B,k in A.components
             ],

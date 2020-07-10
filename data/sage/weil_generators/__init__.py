@@ -1,0 +1,1 @@
+from .weil_generators import find_wg_in_field,find_wg_in_product

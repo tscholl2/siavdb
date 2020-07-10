@@ -1,4 +1,8 @@
-indexforms = load("indexforms.sobj")
+from pathlib import Path
+
+path = Path(__file__).parent
+indexforms = load(str(path / "indexforms.sobj"))
+
 @cached_function
 def wg_find_T(F):
     """
@@ -22,7 +26,7 @@ def wg_find_T(F):
                 break
         else:
             raise Exception("unimplemented: %s" % F)
-    assert all(F.order([a]).is_maximal() for a in T)
+    assert F.degree() == 1 or all(F.order([a]).is_maximal() for a in T)
     assert all(a-b not in ZZ for a,b in Subsets(T,k=2))
     return T
 
@@ -72,7 +76,7 @@ def find_wg_in_field(K,M=10):
         for z in [-1,1]
         for u in (
             prod(u^e for u,e in zip(F.units(),v))
-            for v in cartesian_product_iterator([-M..M](/-M..M/view)*(g-1))
+            for v in cartesian_product_iterator([[-M..M]]*(g-1))
         )
     )
     V,K_from_V,K_to_V = K.vector_space()
@@ -111,6 +115,7 @@ def find_wg_in_product(K1,K2):
     V2,V2_to_F2,F2_to_V2 = F2.vector_space()
     T1 = wg_find_T(F1)
     T2 = wg_find_T(F2)
+    W = []
     for eta1,eta2 in cartesian_product_iterator([T1,T2]):
         for P in _cached_pts(
             Matrix(
@@ -134,4 +139,5 @@ def find_wg_in_product(K1,K2):
                 assert all(alpha*alpha.conjugate() == q for alpha,iota in zip([alpha1,alpha2],[iota1,iota2]))
                 assert all(K.order([alpha,alpha.conjugate()]).is_maximal() for K,alpha in zip([K1,K2],[alpha1,alpha2]))
                 assert (alpha1+alpha1.conjugate()).minpoly().resultant((alpha2+alpha2.conjugate()).minpoly())^2 == 1
-                yield (alpha1,alpha2)
+                W.append((alpha1,alpha2))
+    return W

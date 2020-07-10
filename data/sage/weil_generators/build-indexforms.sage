@@ -1,3 +1,5 @@
+from cm_fields import CM_FIELDS
+
 def run(F):
     """
     Given a totally real field F, this returns a set of representatives of
@@ -42,7 +44,6 @@ from tqdm import tqdm
 #for F,gens in tqdm(indexforms,desc="Testing..."):
 #    assert all(F.order([a]).is_maximal() for a in gens), F
 
-load("cm-fields.sage")
 for K in tqdm(CM_FIELDS[8]):
     F,_ = K.maximal_totally_real_subfield()
     if any(F2.is_isomorphic(F) for F2,_ in indexforms):
