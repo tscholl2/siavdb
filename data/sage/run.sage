@@ -14,26 +14,34 @@ try:
         DATA = process_map(
                 SIAV,
                 [R(v["f"]) for v in json.load(f).values()],
-                chunksize=16,
+                chunksize=32,
                 max_workers=MAX_WORKERS,
                 desc="loading",
             )
 except FileNotFoundError:
     DATA = []
-
 seen = set(A.f for A in DATA)
+with open("products.txt") as f:
+    R.<x> = ZZ[]
+    arr = sage_eval(f.read(),locals={"x":x})
+    for fi in tqdm(arr,desc="reading products list"):
+        for f in fi + [prod(fi)]:
+            if f not in seen:
+                DATA.append(SIAV(f))
+                seen.add(f)
+
 # look for simple stuff
-def foo(args):
+def foo(K):
+    M = {2:1000,4:100,6:20,8:10}
     try:
-        return list(find_wg_in_field(args[0],M=args[1]))
+        return list(find_wg_in_field(K,M=0))#M[K.degree()]))
     except ValueError:
         return []
-M = {2:10,4:0,6:0,8:0,10:0}#{2:1000,4:100,6:10,8:5,10:1}
 for alpha in tqdm([
     w for W in process_map(
         foo,
-        [(K,M[g]) for g in [2] for K in CM_FIELDS[g]],
-        chunksize=16,
+        [K for g in [2,4,6,8] for K in CM_FIELDS[g]],
+        chunksize=4,
         max_workers=MAX_WORKERS,
         desc="wg simple",
     ) for w in W
@@ -46,51 +54,35 @@ for alpha in tqdm([
         seen.add(f)
     except AssertionError:
         continue
-# known products
-with open("weil_generators/products.txt") as f:
-    R.<x> = ZZ[]
-    arr = sage_eval(s,locals={"x":x})
-    for fi in arr:
-        for f in fi + [prod(fi)]:
-            if f not in seen:
-                DATA.append(SIAV(f))
-                seen.add(f)
+
 # search for other products
-simple = [A for A in DATA if A.is_simple]
-def foo(Ai):
-    A1,A2 = [A.components[0] for A in Ai]
-    if (len(components) == 1 or all(k==1 for _,k in components)) and A1.q == A2.q and A1.beta.minpoly().resultant(A2.beta.minpoly())^2 == 1:
-        try:
-            SIAV(prod(A.f for A in Ai))
-            return frozenset([A1.f,A2.f])
-        except AssertionError:
-            return None
+simple = [A.components[0][0] for A in DATA if A.is_simple][:1]
 edges = set()
-for res in process_map(
-    foo,
-    ((A,B) for i,A in enumerate(simple) for j,B in enumerate(simple[i:])),
-    chunksize=1000,
-    max_workers=MAX_WORKERS,
-    desc="wg products 2",
+for A,B in tqdm(
+    ((A,B) for i,A in enumerate(simple) for B in simple[i+1:]),
     total=int(len(simple)*(len(simple)-1)/2),
+    desc="building edges",
 ):
-    if res is not None:
-        edges.add(res)
+    if A.q == B.q and A.beta.minpoly().resultant(B.beta.minpoly())^2 == 1:
+        edges.add(frozenset([A.f,B.f]))
 G = Graph([list(e) for e in edges])
-for c in tqdm([d for i,c in G.clique_complex().cells().items() for d in list(c) if i>=1],"siav products"):
-    f = prod(c)
-    if f in seen:
-        continue
+cells = G.clique_complex().cells()
+products = [prod(d) for i,c in cells.items() for d in list(c) if i>=1]
+def foo(f):
     try:
-        DATA.append(SIAV(f))
-        seen.add(f)
+        return SIAV(f)
     except AssertionError:
-        continue
-
-
-# save
-with open("siav-list2.json","w") as f:
-    json.dump({A.id: A.to_jsonable() for A in DATA},f,indent=2)
+        return None
+for A in process_map(
+    foo,
+    products,
+    chunksize=32,
+    max_workers=MAX_WORKERS,
+    desc="product siavs",
+):
+    if A.f not in seen:
+        DATA.append(A)
+        seen.add(f)
 
 
 print(f"""
@@ -102,3 +94,7 @@ total = {len(DATA)}
 -------------------
 # not simple = {len([A for A in DATA if not A.is_simple])}
 """)
+
+# save
+with open("siav-list2.json","w") as f:
+    json.dump({A.id: A.to_jsonable() for A in DATA},f,indent=2)
