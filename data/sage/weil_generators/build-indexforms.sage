@@ -9,7 +9,9 @@ def run(F):
         return [F(0)]
     if F.degree() == 2:
         return ((F.disc() + sqrt(F.disc()))/2).minpoly().roots(ring=F,multiplicities=False)
+    print(F)
     s = magma.eval("""
+        SetMemoryLimit(2000000000);
         R<x> := PolynomialRing(RationalField());
         f := %s;
         O := MaximalOrder(f);
@@ -44,12 +46,12 @@ from tqdm import tqdm
 #for F,gens in tqdm(indexforms,desc="Testing..."):
 #    assert all(F.order([a]).is_maximal() for a in gens), F
 
-for K in tqdm(CM_FIELDS[8]):
+for K in tqdm(CM_FIELDS[6]):
     F,_ = K.maximal_totally_real_subfield()
     if any(F2.is_isomorphic(F) for F2,_ in indexforms):
         continue
     try:
-        gens = run_timed(F)
+        gens = run(F)
     except ValueError:
         continue
     indexforms.append([F,gens])
