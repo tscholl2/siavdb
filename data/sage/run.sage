@@ -10,7 +10,7 @@ MAX_WORKERS = 2
 # load previously generated stuff
 R.<x> = ZZ[]
 try:
-    with open("siav-list2.json") as f:
+    with open("siav-list.json") as f:
         DATA = process_map(
                 SIAV,
                 [R(v["f"]) for v in json.load(f).values()],
@@ -96,5 +96,5 @@ total = {len(DATA)}
 """)
 
 # save
-with open("siav-list2.json","w") as f:
+with open("siav-list.json","w") as f:
     json.dump({A.id: A.to_jsonable() for A in DATA},f,indent=2)
