@@ -1,3 +1,5 @@
+# sage weil_generators.sage && mv weil_generators.sage.py weil_generators.py
+
 from pathlib import Path
 
 path = Path(__file__).parent
@@ -25,7 +27,7 @@ def wg_find_T(F):
                         T.append(a)
                 break
         else:
-            raise Exception("unimplemented: %s" % F)
+            raise ValueError("don't have indexforms for: %s" % F)
     assert F.degree() == 1 or all(F.order([a]).is_maximal() for a in T)
     assert all(a-b not in ZZ for a,b in Subsets(T,k=2))
     return T
