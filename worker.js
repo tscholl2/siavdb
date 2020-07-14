@@ -3,7 +3,7 @@ const DB = [];
 
 const methods = { query, addCurves, start };
 
-self.onmessage = async function(e) {
+self.onmessage = async function (e) {
   const [id, methodName, methodArgs] = e.data;
   const result = await methods[methodName].apply(null, methodArgs);
   self.postMessage([id, result]);
@@ -13,7 +13,7 @@ async function start() {
   const response = await fetch("data/siav-list.json");
   const data = await response.json();
   await new Promise(resolve => setTimeout(resolve, 500));
-  for (let A of data) {
+  for (let A of Object.values(data)) {
     DB.push(A);
   }
   DB.sort(siavComparator);
@@ -37,26 +37,29 @@ function addCurves() {
   return brr;
 }
 
+// TODO: cache total results for easy slicing when limit/offset changes
 function query(searchParameters = {}) {
-  const data = [];
+  if (searchParameters["function"])
+    searchParameters["function"] = eval(searchParameters["function"]);
+  const results = [];
   for (let siav of DB) {
     let ok = true;
-    for (let key in siav) {
-      const value = searchParameters[key];
-      if (value && `${value}` != `${siav[key]}`) {
+    for (let [k, q] of Object.entries(searchParameters)) {
+      const v = siav[k];
+      if ((k === "function" && !q(siav)) || (v != null && `${q}` != `${v}`)) {
         ok = false;
+        break;
       }
     }
-    if (ok) {
-      data.push(siav);
-    }
+    if (ok)
+      results.push(siav);
   }
   let { offset = 0, limit = 10 } = searchParameters;
   offset = parseInt(offset, 10);
   limit = parseInt(limit, 10);
   return {
-    data: data.slice(offset, offset + limit),
-    total: data.length
+    results: results.slice(offset, offset + limit),
+    total: results.length
   };
 }
 

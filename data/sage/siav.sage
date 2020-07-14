@@ -23,6 +23,7 @@ class SimpleSIAV:
         self.g = f.degree()/2
         self.q = ZZ(f(0)^(1/self.g))
         self.p,self.a = self.q.perfect_power()
+        self.N = ZZ(self.f(1))
         self.croots = f.roots(ring=CC)
         self.newton_polygon = [QQ(a) for a in pari.newtonpoly(f,self.p)]
         self.is_ordinary = not self.p.divides(f[self.g]) # see Def.~3.1 Howe 1995
@@ -42,11 +43,16 @@ class SIAV:
     def __init__(self,f: Polynomial):
         assert ZZ(f(0)).is_pseudoprime_power()
         self.f = f
-        self.id = id(f)
-        self.components = [(SimpleSIAV(h),k) for h,k in f.factor()]
+        self.id = id(self.f)
+        self.components = [(SimpleSIAV(h),k) for h,k in self.f.factor()]
+        self.g = ZZ(self.f.degree()/2)
+        self.is_simple = len(self.components) == 1 and self.components[0][1] == 1
+        self.is_ordinary = all(B.is_ordinary for B,_ in self.components)
+        self.is_principally_polarized = all(B.is_principally_polarized for B,_ in self.components)
         self.q = self.components[0][0].q
         self.a = self.components[0][0].a
         self.p = self.components[0][0].p
+        self.N = ZZ(self.f(1))
         assert len(self.components) == 1 or all(k==1 for _,k in self.components)
         assert all(
             A1.q == A2.q
@@ -54,7 +60,6 @@ class SIAV:
             A1.beta.minpoly().resultant(A2.beta.minpoly())^2 == 1
             for [A1,_],[A2,_] in Subsets(self.components,2)
         )
-        self.is_simple = len(self.components) == 1 and self.components[0][1] == 1
 
     def to_jsonable(self):
         A = self
@@ -65,9 +70,11 @@ class SIAV:
             "q": str(A.q),
             "a": str(A.a),
             "p": str(A.p),
-            "g": str(sum(B.g for B,_ in A.components)),
+            "N": str(A.N),
+            "g": str(A.g),
             "is_simple": A.is_simple,
-            "is_principally_polarized": all(B.is_principally_polarized for B,_ in A.components),
+            "is_ordinary": A.is_ordinary,
+            "is_principally_polarized": A.is_principally_polarized,
             "DeltaK": str(prod(B.K.discriminant() for B,_ in A.components)),
             "DeltaK+": str(prod(B.F.discriminant() for B,_ in A.components)),
             "components": [
@@ -77,6 +84,7 @@ class SIAV:
                     "f": str(B.pi.minpoly()),
                     "h": str(B.beta.minpoly()),
                     "g": str(B.g),
+                    "N": str(B.N),
                     "croots": [str(z) for z in B.croots],
                     "newton_polygon": [str(a) for a in B.newton_polygon],
                     "is_ordinary": B.is_ordinary,

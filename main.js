@@ -71,8 +71,8 @@ function App(dispatch) {
       isLoading
         ? Loading()
         : total === 0
-        ? h("h3", null, "No results found :(")
-        : [
+          ? h("h3", null, "No results found :(")
+          : [
             h(
               "h3",
               { key: "total" },
@@ -86,34 +86,34 @@ function App(dispatch) {
                   ? "Try searching!"
                   : EmptyList()
                 : data.map(siav =>
-                    h(
-                      "li",
-                      { key: siav["id"], style: "margin:20px 0;" },
-                      [
-                        h(
-                          "span",
-                          {
-                            key: "summary",
-                            style:
-                              "cursor:pointer;border:1px solid blue;padding: 5px",
-                            onclick: () =>
-                              dispatch(s => ({
-                                ...s,
-                                detail:
-                                  detail === siav["id"] ? undefined : siav["id"]
-                              }))
-                          },
-                          h(LessDetail, siav)
-                        ),
-                        detail === siav["id"] &&
-                          h(
-                            "div",
-                            { key: "details", style: "margin-top: 10px;" },
-                            h(MoreDetail, siav)
-                          )
-                      ]
-                    )
+                  h(
+                    "li",
+                    { key: siav["id"], style: "margin:20px 0;" },
+                    [
+                      h(
+                        "span",
+                        {
+                          key: "summary",
+                          style:
+                            "cursor:pointer;border:1px solid blue;padding: 5px",
+                          onclick: () =>
+                            dispatch(s => ({
+                              ...s,
+                              detail:
+                                detail === siav["id"] ? undefined : siav["id"]
+                            }))
+                        },
+                        h(LessDetail, siav)
+                      ),
+                      detail === siav["id"] &&
+                      h(
+                        "div",
+                        { key: "details", style: "margin-top: 10px;" },
+                        h(MoreDetail, siav)
+                      )
+                    ]
                   )
+                )
             ),
             !search["q"] && search["g"] === "1"
               ? h("button", { onclick: () => loadMore(search) }, "More")
@@ -165,7 +165,7 @@ function Search({ values, onsubmit }) {
         h("br"),
         h("label", null, [
           "Principally Polarized ",
-          h("select", { name: "PP", value: values["PP"] }, [
+          h("select", { name: "is_principally_polarized", value: values["PP"] }, [
             h("option", { value: "" }, ""),
             h("option", { value: "true" }, "Yes"),
             h("option", { value: "false" }, "No")
@@ -174,7 +174,7 @@ function Search({ values, onsubmit }) {
         h("br"),
         h("label", null, [
           "Ordinary ",
-          h("select", { name: "OR", value: values["OR"] }, [
+          h("select", { name: "is_ordinary", value: values["OR"] }, [
             h("option", { value: "" }, ""),
             h("option", { value: "true" }, "Yes"),
             h("option", { value: "false" }, "No")
@@ -183,7 +183,7 @@ function Search({ values, onsubmit }) {
         h("br"),
         h("label", null, [
           "Simple ",
-          h("select", { name: "S", value: values["S"] }, [
+          h("select", { name: "is_simple", value: values["S"] }, [
             h("option", { value: "" }, ""),
             h("option", { value: "true" }, "Yes"),
             h("option", { value: "false" }, "No")
@@ -191,7 +191,7 @@ function Search({ values, onsubmit }) {
         ]),
         h("br"),
         h("label", null, [
-          h("math-tex", null, "\\# A(\\mathbb{F}_q) = ")," ",
+          h("math-tex", null, "\\# A(\\mathbb{F}_q) = "), " ",
           h("input", {
             name: "N",
             type: "text",
@@ -199,6 +199,10 @@ function Search({ values, onsubmit }) {
             pattern: "\\d+",
             value: values["N"]
           })
+        ]),
+        h("label", null, [
+          "Custom ",
+          h("textarea", { name: "function", value: values["function"], placeholder: "(A) => BigInt(A.q) == 27" })
         ]),
         h("br"),
         h("label", null, [
@@ -244,39 +248,11 @@ function LessDetail(siav) {
       siav["q"].length / Math.log10(2)
     ).toFixed(2)}}`;
   } else {
-    s = `${siav["f"].replace(/\*/g, "")}`;
+    s = `${siav["f"].replace(new RegExp("\\*", "g"), "")}`;
   }
   return h("math-tex", null, s);
 }
 
-/**
- * {
- *   id: "3580360688fe80da35f5089083d386ae28b15d9cdf099f4cbd52f5492a182e73",
- *   f: "x^2 - 2*x + 2",
- *   p: "2",
- *   a: "1",
- *   q: "2",
- *   S: true,
- *   g: "1",
- *   AP: "0",
- *   F: [["0", "1"], ["-2", "2"]],
- *   PP: true,
- *   N: "1",
- *   croots: [
- *     "1.00000000000000 - 1.00000000000000*I",
- *     "1.00000000000000 + 1.00000000000000*I"
- *   ],
- *   V: [["2", "-1"], ["2", "0"]],
- *   NP: ["1/2", "1/2"],
- *   OR: false,
- *   Kf: "x^2 + 1",
- *   "K+f": "y - 1",
- *   Kdeg: "2",
- *   "K+deg": "1",
- *   "K+disc": "1",
- *   Kdisc: "-4"
- * }
- */
 function MoreDetail(siav) {
   return h(
     "table",
@@ -290,9 +266,7 @@ function MoreDetail(siav) {
           h(
             "math-tex",
             null,
-            `f(x) = ${siav["f"]
-              .replace(/\*/g, "")
-              .replace(/\^(\d+)/g, "^{$1}")}`
+            `f(x) = ${siav["f"].replace(new RegExp("\\*", "g"), "").replace(/\^(\d+)/g, "^{$1}")}`
           ),
           h(
             "button",
@@ -303,12 +277,14 @@ function MoreDetail(siav) {
                 const button = e.target;
                 button.disabled = true;
                 button.innerText = "✓";
+                setTimeout(() => { button.disabled = false; button.innerText = "copy" }, 5000);
               }
             },
             "copy"
           )
         ])
       ),
+      /*
       h("tr", null, h("th", null, "Base Field")),
       h(
         "tr",
@@ -426,10 +402,7 @@ function MoreDetail(siav) {
           h(
             "math-tex",
             null,
-            `K = \\frac{\\mathbb{Q}[x]}{\\langle ${siav["Kf"].replace(
-              /\*/g,
-              ""
-            )} \\rangle}`
+            `K = \\frac{\\mathbb{Q}[x]}{\\langle ${siav["Kf"].replace(new RegExp("\\*", "g"), "")} \\rangle}`
           )
         )
       ),
@@ -454,7 +427,7 @@ function MoreDetail(siav) {
             "math-tex",
             null,
             `K^+ = \\frac{\\mathbb{Q}[y]}{\\langle ${siav["K+f"].replace(
-              /\*/g,
+              new RegExp("\\*", "g"),
               ""
             )} \\rangle}`
           )
@@ -470,6 +443,7 @@ function MoreDetail(siav) {
           h("math-tex", null, `\\mathrm{Disc}(K^+) = ${siav["K+disc"]}`)
         )
       )
+      */
     ]
   );
 }
