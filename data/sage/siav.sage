@@ -44,6 +44,9 @@ class SIAV:
         self.f = f
         self.id = id(f)
         self.components = [(SimpleSIAV(h),k) for h,k in f.factor()]
+        self.q = self.components[0][0].q
+        self.a = self.components[0][0].a
+        self.p = self.components[0][0].p
         assert len(self.components) == 1 or all(k==1 for _,k in self.components)
         assert all(
             A1.q == A2.q
@@ -59,11 +62,11 @@ class SIAV:
             "id": A.id,
             "f": str(A.f),
             "h": str(prod(B.beta.minpoly()^k for B,k in A.components)),
-            "q": str(A.components[0][0].q),
-            "a": str(A.components[0][0].a),
-            "p": str(A.components[0][0].p),
+            "q": str(A.q),
+            "a": str(A.a),
+            "p": str(A.p),
             "g": str(sum(B.g for B,_ in A.components)),
-            "simple": A.is_simple,
+            "is_simple": A.is_simple,
             "is_principally_polarized": all(B.is_principally_polarized for B,_ in A.components),
             "DeltaK": str(prod(B.K.discriminant() for B,_ in A.components)),
             "DeltaK+": str(prod(B.F.discriminant() for B,_ in A.components)),
@@ -74,9 +77,6 @@ class SIAV:
                     "f": str(B.pi.minpoly()),
                     "h": str(B.beta.minpoly()),
                     "g": str(B.g),
-                    "a": str(B.a),
-                    "p": str(B.p),
-                    "q": str(B.q),
                     "croots": [str(z) for z in B.croots],
                     "newton_polygon": [str(a) for a in B.newton_polygon],
                     "is_ordinary": B.is_ordinary,

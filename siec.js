@@ -63,7 +63,8 @@ async function sha256(s) {
 }
 
 /**
- *
+ * Given a bound M, return all SIEC's over GF(q) with q >= M minimal
+ * such that an SIEC exists.
  * @param {BigInt} M
  * @returns {Array}
  */
@@ -91,15 +92,14 @@ async function siecData(t, q) {
   const component = {
     exponent: "1",
     id: await sha256(`${q},${t},1`),
-    f: t > 0n
-      ? `x^2 - ${t}x + ${q}`
-      : t < 0n
-        ? `x^2 + ${-t}x + ${q}`
-        : `x^2 + ${q}`,
-    h: t > 0 ? `x - ${t}` : `x + ${-t}`,
-    q: `${q}`,
-    a: `${a}`,
-    p: `${p}`,
+    f: t === 0n
+      ? `x^2 + ${q}`
+      : t > 0n
+        ? `x^2 - ${t}x + ${q}`
+        : t < 0n
+          ? `x^2 + ${-t}x + ${q}`
+          : `x^2 + ${q}`,
+    h: t === 0n ? "x" : t > 0n ? `x - ${t}` : `x + ${-t}`,
     g: "1",
     croots: t === 0n ? [`sqrt(${q})`, `-sqrt(${q})`] : ["?", "?"],
     newton_polygon: t % p !== 0n ? ["1", "0"] : ["1/2", "1/2"],
@@ -116,9 +116,9 @@ async function siecData(t, q) {
     id: component.id,
     f: component.f,
     h: component.h,
-    q: component.q,
-    a: component.a,
-    p: component.p,
+    q: `${q}`,
+    a: `${a}`,
+    p: `${p}`,
     g: component.g,
     is_simple: component.is_simple,
     is_principally_polarized: component.is_principally_polarized,
@@ -154,7 +154,7 @@ async function nextORSIEC(M) {
       }
       q = q >> 2n;
       const p = BigIntMath.isPerfectPower(q)[0];
-      if (q > M && BigIntMath.isProbablePrime(p, 20n)) {
+      if (q >= M && BigIntMath.isProbablePrime(p, 20n)) {
         return [await siecData(t, q), await siecData(-t, q)];
       }
     }

@@ -11,7 +11,7 @@ def run(F):
         return ((F.disc() + sqrt(F.disc()))/2).minpoly().roots(ring=F,multiplicities=False)
     print(F)
     s = magma.eval("""
-        SetMemoryLimit(2000000000);
+        SetMemoryLimit(4000000000);
         R<x> := PolynomialRing(RationalField());
         f := %s;
         O := MaximalOrder(f);
@@ -46,9 +46,13 @@ from tqdm import tqdm
 #for F,gens in tqdm(indexforms,desc="Testing..."):
 #    assert all(F.order([a]).is_maximal() for a in gens), F
 
-for K in tqdm(CM_FIELDS[6]):
+for K in tqdm(CM_FIELDS[8]):
     F,_ = K.maximal_totally_real_subfield()
     if any(F2.is_isomorphic(F) for F2,_ in indexforms):
+        continue
+    if F.polynomial() == x^3 - 62820*x^2 + 69024*x - 3:
+        continue
+    if F.polynomial() == x^4 - 14*x^3 + 64*x^2 - 104*x + 50:
         continue
     try:
         gens = run(F)

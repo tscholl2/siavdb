@@ -32,7 +32,7 @@ with open("products.txt") as f:
 
 # look for simple stuff
 def foo(K):
-    M = {2:1000,4:100,6:20,8:10}
+    M = {2:1000,4:100,6:25,8:10}
     try:
         return list(find_wg_in_field(K,M=0))#M[K.degree()]))
     except ValueError:
@@ -56,7 +56,7 @@ for alpha in tqdm([
         continue
 
 # search for other products
-simple = [A.components[0][0] for A in DATA if A.is_simple][:1]
+simple = []#[A.components[0][0] for A in DATA if A.is_simple]
 edges = set()
 for A,B in tqdm(
     ((A,B) for i,A in enumerate(simple) for B in simple[i+1:]),
@@ -96,5 +96,5 @@ total = {len(DATA)}
 """)
 
 # save
-with open("siav-list.json","w") as f:
+with open("siav-list3.json","w") as f:
     json.dump({A.id: A.to_jsonable() for A in DATA},f,indent=2)
