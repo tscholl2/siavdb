@@ -24,8 +24,8 @@ async function start() {
   c.addListener(s => patch(document.getElementById("app"), app(s)));
   c.dispatch(s => ({ ...s, intializing: true }));
   await callWorker("start");
-  const resp = await callWorker("query");
-  c.dispatch(s => ({ ...s, ...resp }));
+  const { results, ...resp } = await callWorker("query");
+  c.dispatch(s => ({ ...s, ...resp, data: results }));
   c.dispatch(s => ({ ...s, intializing: false }));
 }
 
@@ -35,17 +35,12 @@ function App(dispatch) {
   const loadMore = async values => {
     dispatch(s => ({ ...s, isLoading: true }));
     await callWorker("addCurves");
-    const resp = await callWorker("query", values);
-    dispatch(s => ({
-      ...s,
-      ...resp,
-      isLoading: false
-    }));
+    await query(values);
   };
   const query = async values => {
     dispatch(s => ({ ...s, isLoading: true }));
-    const resp = await callWorker("query", values);
-    dispatch(s => ({ ...s, ...resp, isLoading: false }));
+    const { results, ...resp } = await callWorker("query", values);
+    dispatch(s => ({ ...s, ...resp, data: results, isLoading: false }));
   };
   const submitSearch = values => {
     dispatch(s => ({ ...s, search: values, detail: null }));
@@ -200,9 +195,14 @@ function Search({ values, onsubmit }) {
             value: values["N"]
           })
         ]),
+        h("br"),
         h("label", null, [
           "Custom ",
-          h("textarea", { name: "function", value: values["function"], placeholder: "(A) => BigInt(A.q) == 27" })
+          h("textarea", {
+            name: "custom",
+            value: values["custom"],
+            placeholder: "(A) => BigInt(A.q) == 27",
+          })
         ]),
         h("br"),
         h("label", null, [
@@ -248,7 +248,7 @@ function LessDetail(siav) {
       siav["q"].length / Math.log10(2)
     ).toFixed(2)}}`;
   } else {
-    s = `${siav["f"].replace(new RegExp("\\*", "g"), "")}`;
+    s = `${prettyPolynomial(siav["f"])}`;
   }
   return h("math-tex", null, s);
 }
@@ -256,194 +256,66 @@ function LessDetail(siav) {
 function MoreDetail(siav) {
   return h(
     "table",
-    { style: "border: 2px solid purple; background-color: rgba(0,0,255,0.1);" },
+    { style: "border: 2px solid purple;border-collapse:collapse;background-color: rgba(0,0,255,0.1);" },
     [
-      h("tr", null, h("th", null, "Weil Polynomial")),
-      h(
-        "tr",
-        null,
-        h("td", null, [
-          h(
-            "math-tex",
-            null,
-            `f(x) = ${siav["f"].replace(new RegExp("\\*", "g"), "").replace(/\^(\d+)/g, "^{$1}")}`
-          ),
-          h(
-            "button",
-            {
-              style: "margin-left:10px",
-              onclick: e => {
-                navigator.clipboard.writeText(siav["f"]);
-                const button = e.target;
-                button.disabled = true;
-                button.innerText = "✓";
-                setTimeout(() => { button.disabled = false; button.innerText = "copy" }, 5000);
-              }
-            },
-            "copy"
-          )
+      h("tr", {}, h("th", { colspan: "2" }, "ID")),
+      h("tr", {}, h("td", { colspan: "2" }, [
+        h("pre", { style: "display:inline-block;" }, siav["id"].substr(0, 10) + "..."),
+        h("button", { "data-copy": siav["id"], style: "margin-left:10px", onclick: copyButton }, "copy"),
+      ])),
+      h("tr", {}, h("th", { colspan: "2" }, "Weil Polynomial")),
+      h("tr", {}, h("td", { colspan: "2" }, [
+        h("math-tex", {}, `f(x) = ${prettyPolynomial(siav["f"])}`),
+        h("button", { "data-copy": siav["f"], style: "margin-left:10px", onclick: copyButton }, "copy"),
+      ])),
+      h("tr", {}, h("th", { colspan: "2" }, "Real Weil Polynomial")),
+      h("tr", {}, h("td", { colspan: "2" }, h("math-tex", {}, `g(x) = ${prettyPolynomial(siav["h"])}`))),
+      h("tr", {}, h("th", { colspan: "2" }, "Dimension")),
+      h("tr", {}, h("td", { colspan: "2" }, h("math-tex", {}, `\\dim A = ${siav["g"]}`))),
+      h("tr", {}, h("th", { colspan: "2" }, "Base Field")),
+      h("tr", {}, h("td", { colspan: "2" }, h("math-tex", {}, siav["a"] == "1" ? `q = p = ${siav["q"]}` : `q = ${siav["q"]} = ${siav["p"]}^{${siav["a"]}}`))),
+      h("tr", {}, h("th", { colspan: "2" }, "Number of points")),
+      h("tr", {}, h("td", { colspan: "2" }, h("math-tex", {}, `\\#A(\\mathbb{F}_q) = ${siav["N"]}`))),
+      h("tr", {}, h("th", { colspan: "2" }, "Simple")),
+      h("tr", {}, h("td", { colspan: "2" }, siav["is_simple"] ? "Yes" : "No")),
+      h("tr", {}, h("th", { colspan: "2" }, "Principally Polarized")),
+      h("tr", {}, h("td", { colspan: "2" }, siav["is_principally_polarized"] ? "Yes" : "No")),
+      h("tr", {}, h("th", { colspan: "2" }, "Components")),
+      ...siav["components"].map(B =>
+        h("tr", {}, [
+          h("td", { style: "width:200px;" }, [
+            h("pre", { style: "display:inline-block;" }, B["id"].substr(0, 10) + "..."),
+            h("button", { "data-copy": B["id"], style: "margin-left:10px", onclick: copyButton }, "copy"),
+          ]),
+          h("td", { style: "border:1px solid black;" }, [
+            h("tr", {}, h("th", {}, "Weil Polynomial")),
+            h("tr", {}, h("td", {}, [
+              h("math-tex", {}, `f(x) = ${prettyPolynomial(B["f"])}`),
+              h("button", { "data-copy": B["f"], style: "margin-left:10px", onclick: copyButton }, "copy"),
+            ])),
+            h("tr", {}, h("th", {}, "Dimension")),
+            h("tr", {}, h("td", {}, h("math-tex", {}, `\\dim B = ${B["g"]}`))),
+            h("tr", {}, h("th", {}, "Real Weil Polynomial")),
+            h("tr", {}, h("td", {}, h("math-tex", {}, `g(x) = ${prettyPolynomial(B["h"])}`))),
+            h("tr", {}, h("th", {}, "Number of points")),
+            h("tr", {}, h("td", {}, h("math-tex", {}, `\\#B(\\mathbb{F}_q) = ${B["N"]}`))),
+            h("tr", {}, h("th", {}, "Principally Polarized")),
+            h("tr", {}, h("td", {}, B["is_principally_polarized"] ? "Yes" : "No")),
+          ]),
         ])
       ),
-      /*
-      h("tr", null, h("th", null, "Base Field")),
-      h(
-        "tr",
-        null,
-        h(
-          "td",
-          null,
-          h(
-            "math-tex",
-            null,
-            siav["a"] === "1"
-              ? `q = p = ${siav["q"]}`
-              : `q = ${siav["q"]} = ${siav["p"]}^{${siav["a"]}}`
-          )
-        )
-      ),
-      h("tr", null, h("th", null, "Approximate Complex Roots")),
-      h(
-        "tr",
-        null,
-        h(
-          "td",
-          null,
-          h(
-            "ul",
-            null,
-            siav["croots"].map(a =>
-              h(
-                "li",
-                { style: "list-style:none;" },
-                h(
-                  "math-tex",
-                  null,
-                  `${a
-                    .replace(/(\d+\.\d{5})(\d+)/g, "$1...")
-                    .replace(/\*I/g, "i")}`
-                )
-              )
-            )
-          )
-        )
-      ),
-      h("tr", null, h("th", null, "Dimension")),
-      h(
-        "tr",
-        null,
-        h("td", null, h("math-tex", null, `\\dim A = ${siav["g"]}`))
-      ),
-      h("tr", null, h("th", null, "Simple")),
-      h("tr", null, h("td", null, siav["S"] ? "Yes" : "No")),
-      h("tr", null, h("th", null, "Number of Points")),
-      h(
-        "tr",
-        null,
-        h(
-          "td",
-          null,
-          h("math-tex", null, `\\# A(\\mathbb{F}_q) = ${siav["N"]}`)
-        )
-      ),
-      h("tr", null, h("th", null, "Newton Polygon")),
-      h(
-        "tr",
-        null,
-        h("td", null, ["Slopes: ", h("math-tex", null, `${siav["NP"]}`)])
-      ),
-      h("tr", null, h("th", null, "Ordinary")),
-      h("tr", null, h("td", null, `${siav["OR"] ? "Yes" : "No"}`)),
-      h("tr", null, h("th", null, "Principally Polarized")),
-      h("tr", null, h("td", null, `${siav["PP"] ? "Yes" : "No"}`)),
-      h("tr", null, h("th", null, "p-Rank")),
-      h(
-        "tr",
-        null,
-        h("td", null, h("math-tex", null, `\\dim A[p] = ${siav["AP"]}`))
-      ),
-      h("tr", null, h("th", null, "Deligne Module")),
-      h(
-        "tr",
-        null,
-        h(
-          "td",
-          null,
-          h(
-            "math-tex",
-            { display: true },
-            `F = \\begin{bmatrix} ${siav["F"]
-              .map(r => `${r.map(c => `${c}`).join(" & ")}`)
-              .join(" \\\\ ")} \\end{bmatrix}`
-          )
-        )
-      ),
-      h(
-        "tr",
-        null,
-        h(
-          "td",
-          null,
-          h(
-            "math-tex",
-            { dislay: true },
-            `V = \\begin{bmatrix} ${siav["V"]
-              .map(r => `${r.map(c => `${c}`).join(" & ")}`)
-              .join(" \\\\ ")} \\end{bmatrix}`
-          )
-        )
-      ),
-      h("tr", null, h("th", null, "CM Field")),
-      h(
-        "tr",
-        null,
-        h(
-          "td",
-          null,
-          h(
-            "math-tex",
-            null,
-            `K = \\frac{\\mathbb{Q}[x]}{\\langle ${siav["Kf"].replace(new RegExp("\\*", "g"), "")} \\rangle}`
-          )
-        )
-      ),
-      h("tr", null, h("th", null, "Discriminant")),
-      h(
-        "tr",
-        null,
-        h(
-          "td",
-          null,
-          h("math-tex", null, `\\mathrm{Disc}(K) = ${siav["Kdisc"]}`)
-        )
-      ),
-      h("tr", null, h("th", null, "Real Subfield")),
-      h(
-        "tr",
-        null,
-        h(
-          "td",
-          null,
-          h(
-            "math-tex",
-            null,
-            `K^+ = \\frac{\\mathbb{Q}[y]}{\\langle ${siav["K+f"].replace(
-              new RegExp("\\*", "g"),
-              ""
-            )} \\rangle}`
-          )
-        )
-      ),
-      h("tr", null, h("th", null, "Discriminant")),
-      h(
-        "tr",
-        null,
-        h(
-          "td",
-          null,
-          h("math-tex", null, `\\mathrm{Disc}(K^+) = ${siav["K+disc"]}`)
-        )
-      )
-      */
     ]
   );
+}
+
+function copyButton(e) {
+  const button = e.target;
+  navigator.clipboard.writeText(button.getAttribute("data-copy"));
+  button.disabled = true;
+  button.innerText = "✓";
+  setTimeout(() => { button.disabled = false; button.innerText = "copy" }, 5000);
+}
+
+function prettyPolynomial(p) {
+  return p.replace(/\*/g, "").replace(/\^(\d+)/g, "^{$1}")
 }

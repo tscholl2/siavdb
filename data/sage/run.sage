@@ -34,13 +34,13 @@ with open("products.txt") as f:
 def foo(K):
     M = {2:1000,4:100,6:25,8:10}
     try:
-        return list(find_wg_in_field(K,M=0))#M[K.degree()]))
+        return list(find_wg_in_field(K,M[K.degree()]))
     except ValueError:
         return []
 for alpha in tqdm([
     w for W in process_map(
         foo,
-        [K for g in [2,4,6,8] for K in CM_FIELDS[g]],
+        [],#[K for g in [2,4,6,8] for K in CM_FIELDS[g]],
         chunksize=4,
         max_workers=MAX_WORKERS,
         desc="wg simple",
@@ -96,5 +96,5 @@ total = {len(DATA)}
 """)
 
 # save
-with open("siav-list3.json","w") as f:
+with open("siav-list.json","w") as f:
     json.dump({A.id: A.to_jsonable() for A in DATA},f,indent=2)

@@ -92,7 +92,7 @@ class SIAV:
                     "verschiebung_matrix": [[str(a) for a in r] for r in B.verschiebung_matrix],
                     "is_principally_polarized": B.is_principally_polarized,
                     "K": str(B.K.polynomial()),
-                    "K+": "y - 1" if B.F.degree() == 1 else str(B.F.polynomial()).replace("x","y"),
+                    "K+": "x - 1" if B.F.degree() == 1 else str(B.F.polynomial()),
                     "DeltaK": str(B.K.discriminant()),
                     "DeltaK+": str(B.F.discriminant()),
                 }
