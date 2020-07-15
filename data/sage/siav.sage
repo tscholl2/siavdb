@@ -17,8 +17,7 @@ class SimpleSIAV:
         assert pi*pi.conjugate() in ZZ
         assert ZZ(pi*pi.conjugate()).is_pseudoprime_power()
         assert K.order([pi,pi.conjugate()]).is_maximal()
-        B = K.ring_of_integers().basis()
-        M = Matrix([b.vector() for b in B]).transpose().inverse()
+        R.<x> = QQ[]
         F,iota = K.maximal_totally_real_subfield()
         self.g = f.degree()/2
         self.q = ZZ(f(0)^(1/self.g))
@@ -28,8 +27,8 @@ class SimpleSIAV:
         self.newton_polygon = [QQ(a) for a in pari.newtonpoly(f,self.p)]
         self.is_ordinary = not self.p.divides(f[self.g]) # see Def.~3.1 Howe 1995
         assert self.is_ordinary or self.a == 1 # check for "ideal"ness pt 2 (ordinary or q prime)
-        self.frobenius_matrix = Matrix([M*(pi*b).vector() for b in B]).transpose()
-        self.verschiebung_matrix = self.q*self.frobenius_matrix.inverse()
+        self.verschiebung = R(pi0.conjugate().vector().list())
+        assert self.verschiebung(pi) == pi.conjugate()
         if self.is_ordinary:
             self.is_principally_polarized = (pi-self.q/pi).norm() != 1 or f[self.g]+1 % (4 if self.q == 2 else self.q) != 0
         else:
@@ -70,13 +69,13 @@ class SIAV:
             "q": str(A.q),
             "a": str(A.a),
             "p": str(A.p),
-            "N": str(A.N),
+            "n": str(A.N),
             "g": str(A.g),
             "is_simple": A.is_simple,
             "is_ordinary": A.is_ordinary,
             "is_principally_polarized": A.is_principally_polarized,
-            "DeltaK": str(prod(B.K.discriminant() for B,_ in A.components)),
-            "DeltaK+": str(prod(B.F.discriminant() for B,_ in A.components)),
+            "deltaK": str(prod(B.K.discriminant() for B,_ in A.components)),
+            "deltaK+": str(prod(B.F.discriminant() for B,_ in A.components)),
             "components": [
                 {
                     "exponent": str(k),
@@ -84,17 +83,16 @@ class SIAV:
                     "f": str(B.pi.minpoly()),
                     "h": str(B.beta.minpoly()),
                     "g": str(B.g),
-                    "N": str(B.N),
+                    "n": str(B.N),
                     "croots": [str(z) for z in B.croots],
                     "newton_polygon": [str(a) for a in B.newton_polygon],
                     "is_ordinary": B.is_ordinary,
-                    "frobenius_matrix": [[str(a) for a in r] for r in B.frobenius_matrix],
-                    "verschiebung_matrix": [[str(a) for a in r] for r in B.verschiebung_matrix],
+                    "verschiebung": str(B.verschiebung).replace("x","pi"),
                     "is_principally_polarized": B.is_principally_polarized,
                     "K": str(B.K.polynomial()),
                     "K+": "x - 1" if B.F.degree() == 1 else str(B.F.polynomial()),
-                    "DeltaK": str(B.K.discriminant()),
-                    "DeltaK+": str(B.F.discriminant()),
+                    "deltaK": str(B.K.discriminant()),
+                    "deltaK+": str(B.F.discriminant()),
                 }
                 for B,k in A.components
             ],

@@ -10,10 +10,10 @@ MAX_WORKERS = 2
 # load previously generated stuff
 R.<x> = ZZ[]
 try:
-    with open("siav-list.json") as f:
+    with open("../siav-list.json") as f:
         DATA = process_map(
                 SIAV,
-                [R(v["f"]) for v in json.load(f).values()],
+                [],#[R(v["f"]) for v in json.load(f).values()],
                 chunksize=32,
                 max_workers=MAX_WORKERS,
                 desc="loading",

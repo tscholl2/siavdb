@@ -19,12 +19,12 @@ function callWorker(name, ...args) {
 }
 
 async function start() {
-  const c = new Controller({});
+  const c = new Controller({ search: { offset: 400 } });
   const app = App(c.dispatch);
   c.addListener(s => patch(document.getElementById("app"), app(s)));
   c.dispatch(s => ({ ...s, intializing: true }));
   await callWorker("start");
-  const { results, ...resp } = await callWorker("query");
+  const { results, ...resp } = await callWorker("query", c.getState().search);
   c.dispatch(s => ({ ...s, ...resp, data: results }));
   c.dispatch(s => ({ ...s, intializing: false }));
 }
@@ -52,7 +52,7 @@ function App(dispatch) {
       total,
       isLoading,
       detail,
-      search = {},
+      search,
       intializing
     } = state;
     if (intializing) {
@@ -127,35 +127,21 @@ function Search({ values, onsubmit }) {
         onsubmit: e => {
           e.preventDefault();
           const values = {};
-          for (let el of e.target.elements) {
-            if (el.name && el.value) {
+          for (let el of e.target.elements)
+            if (el.name && el.value)
               values[el.name] = el.value;
-            }
-          }
           onsubmit(values);
         }
       },
       [
         h("label", null, [
           h("math-tex", null, "q = "),
-          h("input", {
-            name: "q",
-            type: "text",
-            placeholder: "107",
-            pattern: "\\d+",
-            value: values["q"]
-          })
+          h("input", { name: "q", type: "text", placeholder: "107", pattern: "\\d+", value: values["q"] }),
         ]),
         h("br"),
         h("label", null, [
           h("math-tex", null, "g = "),
-          h("input", {
-            name: "g",
-            type: "number",
-            min: "1",
-            placeholder: "2",
-            value: values["g"]
-          })
+          h("input", { name: "g", type: "number", min: "1", placeholder: "2", value: values["g"] }),
         ]),
         h("br"),
         h("label", null, [
@@ -187,47 +173,25 @@ function Search({ values, onsubmit }) {
         h("br"),
         h("label", null, [
           h("math-tex", null, "\\# A(\\mathbb{F}_q) = "), " ",
-          h("input", {
-            name: "N",
-            type: "text",
-            placeholder: "15",
-            pattern: "\\d+",
-            value: values["N"]
-          })
+          h("input", { name: "N", type: "text", placeholder: "15", pattern: "\\d+", value: values["N"] }),
         ]),
         h("br"),
         h("label", null, [
           "Custom ",
-          h("textarea", {
-            name: "custom",
-            value: values["custom"],
-            placeholder: "(A) => BigInt(A.q) == 27",
-          })
+          h("textarea", { name: "custom", value: values["custom"], placeholder: "(A) => BigInt(A.q) == 27", }),
         ]),
         h("br"),
         h("label", null, [
           "Offset ",
-          h("input", {
-            name: "offset",
-            type: "number",
-            min: "0",
-            placeholder: "0",
-            value: values["offset"]
-          })
+          h("input", { name: "offset", type: "number", min: "0", placeholder: "0", value: values["offset"] }),
         ]),
         h("br"),
         h("label", null, [
           "Limit ",
-          h("input", {
-            name: "limit",
-            type: "number",
-            min: "0",
-            placeholder: "10",
-            value: values["limit"]
-          })
+          h("input", { name: "limit", type: "number", min: "0", placeholder: "10", value: values["limit"] }),
         ]),
         h("br"),
-        h("button", { type: "submit" }, "Search")
+        h("button", { type: "submit" }, "Search"),
       ]
     )
   ]);
@@ -244,9 +208,7 @@ function Loading() {
 function LessDetail(siav) {
   let s;
   if (siav["q"].length >= 20) {
-    s = `g = ${siav["g"]}, q \\approx 2^{${(
-      siav["q"].length / Math.log10(2)
-    ).toFixed(2)}}`;
+    s = `g = ${siav["g"]}, q \\approx 2^{${(siav["q"].length / Math.log10(2)).toFixed(2)}}`;
   } else {
     s = `${prettyPolynomial(siav["f"])}`;
   }
@@ -258,49 +220,59 @@ function MoreDetail(siav) {
     "table",
     { style: "border: 2px solid purple;border-collapse:collapse;background-color: rgba(0,0,255,0.1);" },
     [
-      h("tr", {}, h("th", { colspan: "2" }, "ID")),
-      h("tr", {}, h("td", { colspan: "2" }, [
+      h("tr", null, h("th", { colspan: "2" }, "ID")),
+      h("tr", null, h("td", { colspan: "2" }, [
         h("pre", { style: "display:inline-block;" }, siav["id"].substr(0, 10) + "..."),
         h("button", { "data-copy": siav["id"], style: "margin-left:10px", onclick: copyButton }, "copy"),
       ])),
-      h("tr", {}, h("th", { colspan: "2" }, "Weil Polynomial")),
-      h("tr", {}, h("td", { colspan: "2" }, [
-        h("math-tex", {}, `f(x) = ${prettyPolynomial(siav["f"])}`),
+      h("tr", null, h("th", { colspan: "2" }, "Weil Polynomial")),
+      h("tr", null, h("td", { colspan: "2" }, [
+        h("math-tex", null, `f(x) = ${prettyPolynomial(siav["f"])}`),
         h("button", { "data-copy": siav["f"], style: "margin-left:10px", onclick: copyButton }, "copy"),
       ])),
-      h("tr", {}, h("th", { colspan: "2" }, "Real Weil Polynomial")),
-      h("tr", {}, h("td", { colspan: "2" }, h("math-tex", {}, `g(x) = ${prettyPolynomial(siav["h"])}`))),
-      h("tr", {}, h("th", { colspan: "2" }, "Dimension")),
-      h("tr", {}, h("td", { colspan: "2" }, h("math-tex", {}, `\\dim A = ${siav["g"]}`))),
-      h("tr", {}, h("th", { colspan: "2" }, "Base Field")),
-      h("tr", {}, h("td", { colspan: "2" }, h("math-tex", {}, siav["a"] == "1" ? `q = p = ${siav["q"]}` : `q = ${siav["q"]} = ${siav["p"]}^{${siav["a"]}}`))),
-      h("tr", {}, h("th", { colspan: "2" }, "Number of points")),
-      h("tr", {}, h("td", { colspan: "2" }, h("math-tex", {}, `\\#A(\\mathbb{F}_q) = ${siav["N"]}`))),
-      h("tr", {}, h("th", { colspan: "2" }, "Simple")),
-      h("tr", {}, h("td", { colspan: "2" }, siav["is_simple"] ? "Yes" : "No")),
-      h("tr", {}, h("th", { colspan: "2" }, "Principally Polarized")),
-      h("tr", {}, h("td", { colspan: "2" }, siav["is_principally_polarized"] ? "Yes" : "No")),
-      h("tr", {}, h("th", { colspan: "2" }, "Components")),
-      ...siav["components"].map(B =>
-        h("tr", {}, [
+      h("tr", null, h("th", { colspan: "2" }, "Real Weil Polynomial")),
+      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, `g(x) = ${prettyPolynomial(siav["h"])}`))),
+      h("tr", null, h("th", { colspan: "2" }, "Dimension")),
+      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, `\\dim A = ${siav["g"]}`))),
+      h("tr", null, h("th", { colspan: "2" }, "Base Field")),
+      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, siav["a"] == "1" ? `q = p = ${siav["q"]}` : `q = ${siav["q"]} = ${siav["p"]}^{${siav["a"]}}`))),
+      h("tr", null, h("th", { colspan: "2" }, "Number of points")),
+      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, `\\#A(\\mathbb{F}_q) = ${siav["n"]}`))),
+      h("tr", null, h("th", { colspan: "2" }, "Simple")),
+      h("tr", null, h("td", { colspan: "2" }, siav["is_simple"] ? "Yes" : "No")),
+      h("tr", null, h("th", { colspan: "2" }, "Principally Polarized")),
+      h("tr", null, h("td", { colspan: "2" }, siav["is_principally_polarized"] ? "Yes" : "No")),
+      h("tr", null, h("th", { colspan: "2" }, "Components")),
+      ...siav["components"].map((B, i) =>
+        h("tr", null, [
           h("td", { style: "width:200px;" }, [
             h("pre", { style: "display:inline-block;" }, B["id"].substr(0, 10) + "..."),
             h("button", { "data-copy": B["id"], style: "margin-left:10px", onclick: copyButton }, "copy"),
           ]),
           h("td", { style: "border:1px solid black;" }, [
-            h("tr", {}, h("th", {}, "Weil Polynomial")),
-            h("tr", {}, h("td", {}, [
-              h("math-tex", {}, `f(x) = ${prettyPolynomial(B["f"])}`),
+            h("tr", null, h("th", null, "Multiplicity")),
+            h("tr", null, h("td", null, h("math-tex", null, `e_{${i + 1}} = ${B["exponent"]}`))),
+            h("tr", null, h("th", null, "Weil Polynomial")),
+            h("tr", null, h("td", null, [
+              h("math-tex", null, `f_{${i + 1}}(x) = ${prettyPolynomial(B["f"])}`),
               h("button", { "data-copy": B["f"], style: "margin-left:10px", onclick: copyButton }, "copy"),
             ])),
-            h("tr", {}, h("th", {}, "Dimension")),
-            h("tr", {}, h("td", {}, h("math-tex", {}, `\\dim B = ${B["g"]}`))),
-            h("tr", {}, h("th", {}, "Real Weil Polynomial")),
-            h("tr", {}, h("td", {}, h("math-tex", {}, `g(x) = ${prettyPolynomial(B["h"])}`))),
-            h("tr", {}, h("th", {}, "Number of points")),
-            h("tr", {}, h("td", {}, h("math-tex", {}, `\\#B(\\mathbb{F}_q) = ${B["N"]}`))),
-            h("tr", {}, h("th", {}, "Principally Polarized")),
-            h("tr", {}, h("td", {}, B["is_principally_polarized"] ? "Yes" : "No")),
+            h("tr", null, h("th", null, "Real Weil Polynomial")),
+            h("tr", null, h("td", null, h("math-tex", null, `g_{${i + 1}}(x) = ${prettyPolynomial(B["h"])}`))),
+            h("tr", null, h("th", null, "Dimension")),
+            h("tr", null, h("td", null, h("math-tex", null, `\\dim B_{${i + 1}} = ${B["g"]}`))),
+            h("tr", null, h("th", null, "Number of points")),
+            h("tr", null, h("td", null, h("math-tex", null, `\\#B_{${i + 1}}(\\mathbb{F}_q) = ${B["n"]}`))),
+            h("tr", null, h("th", null, "Principally Polarized")),
+            h("tr", null, h("td", null, B["is_principally_polarized"] ? "Yes" : "No")),
+            h("tr", null, h("th", null, "Ordinary")),
+            h("tr", null, h("td", null, B["is_ordinary"] ? "Yes" : "No")),
+            h("tr", null, h("th", null, "Newton Polygon")),
+            h("tr", null, h("td", null, "???")),
+            h("tr", null, h("th", null, "Complex Roots")),
+            h("tr", null, h("td", null, "???")),
+            h("tr", null, h("th", null, "Verschiebung")),
+            h("tr", null, h("td", null, h("math-tex", null, prettyPolynomial(B["h"]).replace(/x/g, "\\pi")))),
           ]),
         ])
       ),
