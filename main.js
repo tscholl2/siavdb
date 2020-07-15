@@ -271,7 +271,7 @@ function MoreDetail(siav) {
             h("tr", null, h("td", null, h("math-tex", null, `\\mathrm{Slopes} = [${B["newton_polygon"].join(",")}]`))),
             h("tr", null, h("td", null, NewtonPolygon(B["newton_polygon"]))),
             h("tr", null, h("th", null, "Complex Roots")),
-            h("tr", null, h("td", null, "???")),
+            h("tr", null, h("td", null, ComplexRoots(B["croots"]))),
             h("tr", null, h("th", null, "CM Field")),
             h("tr", null, h("td", null, h("math-tex", null, `K = \\mathbb{Q}[x]/(${prettyPolynomial(B["K"])})`))),
             h("tr", null, h("td", null, h("math-tex", null, `\\Delta_K = ${B["deltaK"]}`))),
@@ -287,10 +287,10 @@ function MoreDetail(siav) {
 
 function NewtonPolygon(slopes) {
   const n = slopes.length;
-  const grid = []
+  const grid = [];
   for (let i = 0; i <= n; i++)
     grid.push(h("path", { d: `M -8 ${8 * i} l ${8 * (n + 2)} 0 M ${8 * i} -8 l 0 ${8 * (n + 2)}`, fill: "none", stroke: "rgba(128,128,128,0.3)", "stroke-width": i % 5 === 0 ? 2 : 1, "vector-effect": "non-scaling-stroke" }));
-  return h("svg", { preserveAspectRatio: "xMidYMid meet", xmlns: "http://www.w3.org/2000/svg", viewBox: `-4 -4 ${8 * n + 8} ${4 * n + 8}`, style: "transform:scaleY(-1);width:100%;height:100%" }, [
+  return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: `-4 -4 ${8 * n + 8} ${4 * n + 8}`, style: "transform:scaleY(-1);width:100%;height:100%" }, [
     /*
     h("defs", null, [
       h("pattern", { id: "smallGrid", width: "8", height: "8", patternUnits: "userSpaceOnUse" }, [
@@ -306,6 +306,31 @@ function NewtonPolygon(slopes) {
     ...grid,
     h("path", { d: `M 0 ${4 * n} ` + slopes.map(s => `l 8 -${8 * eval(s)}`).join(" "), fill: "none", stroke: "blue", "stroke-width": 5, "vector-effect": "non-scaling-stroke", "stroke-linecap": "round", "stroke-linejoin": "round" }),
   ]);
+}
+
+function ComplexRoots(croots) {
+  const n = croots.length;
+  /*
+  "croots": [
+    "-1.65138781886600 - 0.522415803456408*I",
+    "-1.65138781886600 + 0.522415803456408*I",
+    "0.151387818865997 - 1.72542218842201*I",
+    "0.151387818865997 + 1.72542218842201*I"
+  ],
+  */
+  const points = croots.map(z => {
+    const m = /(-?[\d\.]+)\s([+-]\s?[\d\.]+)/.exec(z);
+    return [eval(m[1]), eval(m[2])];
+  })
+  const r = Math.sqrt(points[0][0] ** 2 + points[0][1] ** 2);
+  const grid = [];
+  for (let i = -1; i <= 1; i++)
+    grid.push(h("path", { d: `M -2 ${i} l 4 0 M ${i} -2 l 0 4`, fill: "none", stroke: "rgba(128,128,128,0.3)", "stroke-width": i % 5 === 0 ? 2 : 0.5, "vector-effect": "non-scaling-stroke" }));
+  return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: `-1.5 -1.5 3 3`, style: "transform:scaleY(-1);width:100%;height:100%" }, [
+    ...grid,
+    ...points.map(([x, y]) => h("circle", { cx: x / r, cy: y / r, r: 0.1, fill: "blue" }))
+  ]);
+
 }
 
 function copyButton(e) {

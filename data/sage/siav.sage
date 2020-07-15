@@ -23,7 +23,7 @@ class SimpleSIAV:
         self.q = ZZ(f(0)^(1/self.g))
         self.p,self.a = self.q.perfect_power()
         self.N = ZZ(self.f(1))
-        self.croots = f.roots(ring=CC)
+        self.croots = [z for z,_ in f.roots(ring=CC)]
         self.newton_polygon = [QQ(a) for a in pari.newtonpoly(f,self.p)]
         self.is_ordinary = not self.p.divides(f[self.g]) # see Def.~3.1 Howe 1995
         assert self.is_ordinary or self.a == 1 # check for "ideal"ness pt 2 (ordinary or q prime)
