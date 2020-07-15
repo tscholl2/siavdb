@@ -27,8 +27,8 @@ class SimpleSIAV:
         self.newton_polygon = [QQ(a) for a in pari.newtonpoly(f,self.p)]
         self.is_ordinary = not self.p.divides(f[self.g]) # see Def.~3.1 Howe 1995
         assert self.is_ordinary or self.a == 1 # check for "ideal"ness pt 2 (ordinary or q prime)
-        self.verschiebung = R(pi0.conjugate().vector().list())
-        assert self.verschiebung(pi) == pi.conjugate()
+        self.frobenius = pi
+        self.verschiebung = pi.conjugate()
         if self.is_ordinary:
             self.is_principally_polarized = (pi-self.q/pi).norm() != 1 or f[self.g]+1 % (4 if self.q == 2 else self.q) != 0
         else:
@@ -87,7 +87,6 @@ class SIAV:
                     "croots": [str(z) for z in B.croots],
                     "newton_polygon": [str(a) for a in B.newton_polygon],
                     "is_ordinary": B.is_ordinary,
-                    "verschiebung": str(B.verschiebung).replace("x","pi"),
                     "is_principally_polarized": B.is_principally_polarized,
                     "K": str(B.K.polynomial()),
                     "K+": "x - 1" if B.F.degree() == 1 else str(B.F.polynomial()),

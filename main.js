@@ -268,16 +268,44 @@ function MoreDetail(siav) {
             h("tr", null, h("th", null, "Ordinary")),
             h("tr", null, h("td", null, B["is_ordinary"] ? "Yes" : "No")),
             h("tr", null, h("th", null, "Newton Polygon")),
-            h("tr", null, h("td", null, "???")),
+            h("tr", null, h("td", null, h("math-tex", null, `\\mathrm{Slopes} = [${B["newton_polygon"].join(",")}]`))),
+            h("tr", null, h("td", null, NewtonPolygon(B["newton_polygon"]))),
             h("tr", null, h("th", null, "Complex Roots")),
             h("tr", null, h("td", null, "???")),
-            h("tr", null, h("th", null, "Verschiebung")),
-            h("tr", null, h("td", null, h("math-tex", null, prettyPolynomial(B["h"]).replace(/x/g, "\\pi")))),
+            h("tr", null, h("th", null, "CM Field")),
+            h("tr", null, h("td", null, h("math-tex", null, `K = \\mathbb{Q}[x]/(${prettyPolynomial(B["K"])})`))),
+            h("tr", null, h("td", null, h("math-tex", null, `\\Delta_K = ${B["deltaK"]}`))),
+            h("tr", null, h("th", null, "Real Field")),
+            h("tr", null, h("td", null, h("math-tex", null, `K^+ = \\mathbb{Q}[y]/(${prettyPolynomial(B["K+"]).replace(/x/g, "y")})`))),
+            h("tr", null, h("td", null, h("math-tex", null, `\\Delta_{K^+} = ${B["deltaK+"]}`))),
           ]),
         ])
       ),
     ]
   );
+}
+
+function NewtonPolygon(slopes) {
+  const n = slopes.length;
+  const grid = []
+  for (let i = 0; i <= n; i++)
+    grid.push(h("path", { d: `M -8 ${8 * i} l ${8 * (n + 2)} 0 M ${8 * i} -8 l 0 ${8 * (n + 2)}`, fill: "none", stroke: "rgba(128,128,128,0.3)", "stroke-width": i % 5 === 0 ? 2 : 1, "vector-effect": "non-scaling-stroke" }));
+  return h("svg", { preserveAspectRatio: "xMidYMid meet", xmlns: "http://www.w3.org/2000/svg", viewBox: `-4 -4 ${8 * n + 8} ${4 * n + 8}`, style: "transform:scaleY(-1);width:100%;height:100%" }, [
+    /*
+    h("defs", null, [
+      h("pattern", { id: "smallGrid", width: "8", height: "8", patternUnits: "userSpaceOnUse" }, [
+        h("path", { d: "M 8 0 L 0 0 0 8", fill: "none", stroke: "gray", "stroke-width": 1, "vector-effect": "non-scaling-stroke" })
+      ]),
+      h("pattern", { id: "grid", width: "40", height: "40", patternUnits: "userSpaceOnUse" }, [
+        h("rect", { width: "40", height: "40", fill: "url(#smallGrid)" }),
+        h("path", { d: "M 40 0 L 0 0 0 40", fill: "none", stroke: "gray", "stroke-width": 3, "vector-effect": "non-scaling-stroke" }),
+      ]),
+    ]),
+    h("rect", { width: "100%", height: "100%", fill: "url(#grid)" }),
+    */
+    ...grid,
+    h("path", { d: `M 0 ${4 * n} ` + slopes.map(s => `l 8 -${8 * eval(s)}`).join(" "), fill: "none", stroke: "blue", "stroke-width": 5, "vector-effect": "non-scaling-stroke", "stroke-linecap": "round", "stroke-linejoin": "round" }),
+  ]);
 }
 
 function copyButton(e) {
