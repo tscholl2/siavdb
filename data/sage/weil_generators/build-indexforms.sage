@@ -46,13 +46,21 @@ from tqdm import tqdm
 #for F,gens in tqdm(indexforms,desc="Testing..."):
 #    assert all(F.order([a]).is_maximal() for a in gens), F
 
-for K in tqdm(CM_FIELDS[8]):
+for K in tqdm(CM_FIELDS[6]):
     F,_ = K.maximal_totally_real_subfield()
     if any(F2.is_isomorphic(F) for F2,_ in indexforms):
         continue
-    if F.polynomial() == x^3 - 62820*x^2 + 69024*x - 3:
-        continue
     if F.polynomial() == x^4 - 14*x^3 + 64*x^2 - 104*x + 50:
+        continue
+    if F.polynomial() == x^4 - 16*x^3 + 85*x^2 - 174*x + 116:
+        continue
+    if F.polynomial() == x^4 - 16*x^3 + 83*x^2 - 154*x + 75:
+        continue
+    if F.polynomial() == x^4 - 14*x^3 + 62*x^2 - 90*x + 17:
+        continue
+    if F.polynomial() == x^4 - 17*x^3 + 98*x^2 - 224*x + 172:
+        continue
+    if F.polynomial() == x^4 - 13*x^3 + 48*x^2 - 39*x + 7:
         continue
     try:
         gens = run(F)
