@@ -89,14 +89,8 @@ function App(dispatch) {
                         "span",
                         {
                           key: "summary",
-                          style:
-                            "cursor:pointer;border:1px solid blue;padding: 5px",
-                          onclick: () =>
-                            dispatch(s => ({
-                              ...s,
-                              detail:
-                                detail === siav["id"] ? undefined : siav["id"]
-                            }))
+                          style: "cursor:pointer;border:1px solid blue;padding:5px;display:inline-block;",
+                          onclick: () => dispatch(s => ({ ...s, detail: detail === siav["id"] ? undefined : siav["id"] })),
                         },
                         h(LessDetail, siav)
                       ),
@@ -135,6 +129,11 @@ function Search({ values, onsubmit }) {
       },
       [
         h("label", null, [
+          "ID = ",
+          h("input", { name: "id", type: "text", placeholder: "07059e5d5e687614d33ae5b8f227608ab7ab82071346cf2b8ef350632e63420c", pattern: "\\w+", value: values["id"] }),
+        ]),
+        h("br"),
+        h("label", null, [
           h("math-tex", null, "q = "),
           h("input", { name: "q", type: "text", placeholder: "107", pattern: "\\d+", value: values["q"] }),
         ]),
@@ -146,7 +145,7 @@ function Search({ values, onsubmit }) {
         h("br"),
         h("label", null, [
           "Principally Polarized ",
-          h("select", { name: "is_principally_polarized", value: values["PP"] }, [
+          h("select", { name: "is_principally_polarized", value: values["is_principally_polarized"] }, [
             h("option", { value: "" }, ""),
             h("option", { value: "true" }, "Yes"),
             h("option", { value: "false" }, "No")
@@ -155,7 +154,7 @@ function Search({ values, onsubmit }) {
         h("br"),
         h("label", null, [
           "Ordinary ",
-          h("select", { name: "is_ordinary", value: values["OR"] }, [
+          h("select", { name: "is_ordinary", value: values["is_ordinary"] }, [
             h("option", { value: "" }, ""),
             h("option", { value: "true" }, "Yes"),
             h("option", { value: "false" }, "No")
@@ -164,7 +163,7 @@ function Search({ values, onsubmit }) {
         h("br"),
         h("label", null, [
           "Simple ",
-          h("select", { name: "is_simple", value: values["S"] }, [
+          h("select", { name: "is_simple", value: values["is_simple"] }, [
             h("option", { value: "" }, ""),
             h("option", { value: "true" }, "Yes"),
             h("option", { value: "false" }, "No")
@@ -173,7 +172,7 @@ function Search({ values, onsubmit }) {
         h("br"),
         h("label", null, [
           h("math-tex", null, "\\# A(\\mathbb{F}_q) = "), " ",
-          h("input", { name: "N", type: "text", placeholder: "15", pattern: "\\d+", value: values["N"] }),
+          h("input", { name: "n", type: "text", placeholder: "15", pattern: "\\d+", value: values["n"] }),
         ]),
         h("br"),
         h("label", null, [
@@ -218,7 +217,7 @@ function LessDetail(siav) {
 function MoreDetail(siav) {
   return h(
     "table",
-    { style: "border: 2px solid purple;border-collapse:collapse;background-color: rgba(0,0,255,0.1);" },
+    { style: "border: 2px solid #006f25;border-collapse:collapse;background-color:rgba(0, 159, 17, 0.1);" },
     [
       h("tr", null, h("th", { colspan: "2" }, "ID")),
       h("tr", null, h("td", { colspan: "2" }, [
@@ -245,11 +244,14 @@ function MoreDetail(siav) {
       h("tr", null, h("th", { colspan: "2" }, "Components")),
       ...siav["components"].map((B, i) =>
         h("tr", null, [
-          h("td", { style: "width:200px;" }, [
-            h("pre", { style: "display:inline-block;" }, B["id"].substr(0, 10) + "..."),
-            h("button", { "data-copy": B["id"], style: "margin-left:10px", onclick: copyButton }, "copy"),
+          h("td", null, [
+            h("tr", null, h("th", null, ["Component ", h("math-tex", null, `B_{${i + 1}}`)])),
+            h("tr", null, h("td", null, [
+              h("pre", { style: "display:inline-block;" }, B["id"].substr(0, 10) + "..."),
+              h("button", { "data-copy": B["id"], style: "margin-left:10px", onclick: copyButton }, "copy"),
+            ])),
           ]),
-          h("td", { style: "border:1px solid black;" }, [
+          h("td", { style: "border:2px solid purple;background-color:rgba(255,0,255,0.1);" }, [
             h("tr", null, h("th", null, "Multiplicity")),
             h("tr", null, h("td", null, h("math-tex", null, `e_{${i + 1}} = ${B["exponent"]}`))),
             h("tr", null, h("th", null, "Weil Polynomial")),
@@ -291,36 +293,17 @@ function NewtonPolygon(slopes) {
   for (let i = 0; i <= n; i++)
     grid.push(h("path", { d: `M -8 ${8 * i} l ${8 * (n + 2)} 0 M ${8 * i} -8 l 0 ${8 * (n + 2)}`, fill: "none", stroke: "rgba(128,128,128,0.3)", "stroke-width": i % 5 === 0 ? 2 : 1, "vector-effect": "non-scaling-stroke" }));
   return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: `-4 -4 ${8 * n + 8} ${4 * n + 8}`, style: "transform:scaleY(-1);width:100%;height:100%" }, [
-    /*
-    h("defs", null, [
-      h("pattern", { id: "smallGrid", width: "8", height: "8", patternUnits: "userSpaceOnUse" }, [
-        h("path", { d: "M 8 0 L 0 0 0 8", fill: "none", stroke: "gray", "stroke-width": 1, "vector-effect": "non-scaling-stroke" })
-      ]),
-      h("pattern", { id: "grid", width: "40", height: "40", patternUnits: "userSpaceOnUse" }, [
-        h("rect", { width: "40", height: "40", fill: "url(#smallGrid)" }),
-        h("path", { d: "M 40 0 L 0 0 0 40", fill: "none", stroke: "gray", "stroke-width": 3, "vector-effect": "non-scaling-stroke" }),
-      ]),
-    ]),
-    h("rect", { width: "100%", height: "100%", fill: "url(#grid)" }),
-    */
     ...grid,
     h("path", { d: `M 0 ${4 * n} ` + slopes.map(s => `l 8 -${8 * eval(s)}`).join(" "), fill: "none", stroke: "blue", "stroke-width": 5, "vector-effect": "non-scaling-stroke", "stroke-linecap": "round", "stroke-linejoin": "round" }),
   ]);
 }
 
 function ComplexRoots(croots) {
-  const n = croots.length;
-  /*
-  "croots": [
-    "-1.65138781886600 - 0.522415803456408*I",
-    "-1.65138781886600 + 0.522415803456408*I",
-    "0.151387818865997 - 1.72542218842201*I",
-    "0.151387818865997 + 1.72542218842201*I"
-  ],
-  */
+  console.log("croots = ", croots)
+  // ["-1.41421356237310*I", "1.41421356237310*I"]
   const points = croots.map(z => {
-    const m = /(-?[\d\.]+)\s([+-]\s?[\d\.]+)/.exec(z);
-    return [eval(m[1]), eval(m[2])];
+    const m = /([-+]?[\d\.]+)\s?([+-]\s?[\d\.]+)?/.exec(z);
+    return m[2] ? [eval(m[1]), eval(m[2])] : [0, eval(m[1])];
   })
   const r = Math.sqrt(points[0][0] ** 2 + points[0][1] ** 2);
   const grid = [];
