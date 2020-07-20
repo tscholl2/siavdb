@@ -29,13 +29,21 @@ def run(F):
     arr = set(flatten([[a,-a] for a in arr]))
     return list(arr)
 
-def run_timed(F):
-    alarm(5)
+import signal
+from contextlib import contextmanager
+
+class TimeoutException(Exception): pass
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
     try:
-        return run(F)
-    except KeyboardInterrupt:
-        raise ValueError
-    alarm(0)
+        yield
+    finally:
+        signal.alarm(0)
 
 try:
     indexforms = load("indexforms.sobj")
@@ -46,11 +54,25 @@ from tqdm import tqdm
 #for F,gens in tqdm(indexforms,desc="Testing..."):
 #    assert all(F.order([a]).is_maximal() for a in gens), F
 
-for K in tqdm(CM_FIELDS[6]):
+for K in tqdm(CM_FIELDS[8]):
     F,_ = K.maximal_totally_real_subfield()
     if any(F2.is_isomorphic(F) for F2,_ in indexforms):
         continue
+    if F.polynomial() == x^4 - 19*x^3 + 106*x^2 - 148*x + 9:
+        continue
+    if F.polynomial() == x^4 - 29*x^3 + 184*x^2 - 312*x + 36:
+        continue
+    if F.polynomial() == x^4 - 17*x^3 + 94*x^2 - 183*x + 99:
+        continue
+    if F.polynomial() == x^4 - 25*x^3 + 168*x^2 - 165*x + 41:
+        continue
+    if F.polynomial() == x^4 - 36*x^3 + 303*x^2 - 812*x + 441:
+        continue
+    if F.polynomial() == x^4 - 29*x^3 + 238*x^2 - 513*x + 319:
+        continue
     if F.polynomial() == x^4 - 14*x^3 + 64*x^2 - 104*x + 50:
+        continue
+    if F.polynomial() == x^4 - 16*x^3 + 78*x^2 - 119*x + 45:
         continue
     if F.polynomial() == x^4 - 16*x^3 + 85*x^2 - 174*x + 116:
         continue
@@ -63,8 +85,11 @@ for K in tqdm(CM_FIELDS[6]):
     if F.polynomial() == x^4 - 13*x^3 + 48*x^2 - 39*x + 7:
         continue
     try:
-        gens = run(F)
-    except ValueError:
+        with time_limit(5):
+            gens = run(F)
+        print("success!")
+    except TimeoutException:
+        print("timed out")
         continue
     indexforms.append([F,gens])
     save(indexforms,"indexforms.sobj")
