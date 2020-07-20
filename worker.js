@@ -10,7 +10,7 @@ self.onmessage = async function (e) {
 };
 
 async function start() {
-  const response = await fetch("siav-list.json");
+  const response = await fetch("siav-list.small.json");
   const data = await response.json();
   await new Promise(resolve => setTimeout(resolve, 500));
   for (let A of Object.values(data))
