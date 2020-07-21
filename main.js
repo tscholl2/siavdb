@@ -1,5 +1,7 @@
 import { patch, h } from "./imports.js";
 import { Controller } from "./imports.js";
+import { Big } from "./big.js";
+console.log(Big)
 
 document.addEventListener("DOMContentLoaded", start);
 
@@ -19,12 +21,12 @@ function callWorker(name, ...args) {
 }
 
 async function start() {
-  const c = new Controller({ search: { offset: 400 } });
+  const c = new Controller({});
   const app = App(c.dispatch);
   c.addListener(s => patch(document.getElementById("app"), app(s)));
   c.dispatch(s => ({ ...s, intializing: true }));
   await callWorker("start");
-  const { results, ...resp } = await callWorker("query", c.getState().search);
+  const { results, ...resp } = await callWorker("query", c.getState().search || {});
   c.dispatch(s => ({ ...s, ...resp, data: results }));
   c.dispatch(s => ({ ...s, intializing: false }));
 }
@@ -46,13 +48,13 @@ function App(dispatch) {
     dispatch(s => ({ ...s, search: values, detail: null }));
     query(values);
   };
-  return state => {
+  return (state = {}) => {
     const {
       data = [],
       total,
       isLoading,
       detail,
-      search,
+      search = {},
       intializing
     } = state;
     if (intializing) {
@@ -104,7 +106,7 @@ function App(dispatch) {
                   )
                 )
             ),
-            !search["q"] && search["g"] === "1"
+            !search["base_field_cardinality"] && search["dimension"] === "1"
               ? h("button", { onclick: () => loadMore(search) }, "More")
               : null
           ]
@@ -134,13 +136,33 @@ function Search({ values, onsubmit }) {
         ]),
         h("br"),
         h("label", null, [
+          h("math-tex", null, "f(x) = "),
+          h("input", { name: "weil_polynomial", type: "text", placeholder: "25", pattern: "\\d+", value: values["weil_polynomial"] }),
+        ]),
+        h("br"),
+        h("label", null, [
+          h("math-tex", null, "g(x) = "),
+          h("input", { name: "real_weil_polynomial", type: "text", placeholder: "25", pattern: "\\d+", value: values["real_weil_polynomial"] }),
+        ]),
+        h("br"),
+        h("label", null, [
           h("math-tex", null, "q = "),
-          h("input", { name: "q", type: "text", placeholder: "107", pattern: "\\d+", value: values["q"] }),
+          h("input", { name: "base_field_cardinality", type: "text", placeholder: "25", pattern: "\\d+", value: values["base_field_cardinality"] }),
+        ]),
+        h("br"),
+        h("label", null, [
+          h("math-tex", null, "p = "),
+          h("input", { name: "base_field_characteristic", type: "text", placeholder: "5", pattern: "\\d+", value: values["base_field_characteristic"] }),
+        ]),
+        h("br"),
+        h("label", null, [
+          h("math-tex", null, "a = "),
+          h("input", { name: "base_field_exponent", type: "text", placeholder: "2", pattern: "\\d+", value: values["base_field_exponent"] }),
         ]),
         h("br"),
         h("label", null, [
           h("math-tex", null, "g = "),
-          h("input", { name: "g", type: "number", min: "1", placeholder: "2", value: values["g"] }),
+          h("input", { name: "dimension", type: "number", min: "1", placeholder: "2", value: values["dimension"] }),
         ]),
         h("br"),
         h("label", null, [
@@ -172,12 +194,12 @@ function Search({ values, onsubmit }) {
         h("br"),
         h("label", null, [
           h("math-tex", null, "\\# A(\\mathbb{F}_q) = "), " ",
-          h("input", { name: "n", type: "text", placeholder: "15", pattern: "\\d+", value: values["n"] }),
+          h("input", { name: "number_of_points", type: "text", placeholder: "15", pattern: "\\d+", value: values["n"] }),
         ]),
         h("br"),
         h("label", null, [
           "Custom ",
-          h("textarea", { name: "custom", value: values["custom"], placeholder: "(A) => BigInt(A.q) == 27", }),
+          h("textarea", { name: "custom", value: values["custom"], placeholder: "(A) => BigInt(A.q) === 27n", }),
         ]),
         h("br"),
         h("label", null, [
@@ -206,10 +228,10 @@ function Loading() {
 
 function LessDetail(siav) {
   let s;
-  if (siav["q"].length >= 20) {
-    s = `g = ${siav["g"]}, q \\approx 2^{${(siav["q"].length / Math.log10(2)).toFixed(2)}}`;
+  if (siav["base_field_cardinality"].length >= 20) {
+    s = `g = ${siav["dimension"]}, q \\approx 2^{${(siav["base_field_cardinality"].length / Math.log10(2)).toFixed(2)}}`;
   } else {
-    s = `${prettyPolynomial(siav["f"])}`;
+    s = `${prettyPolynomial(siav["weil_polynomial"])}`;
   }
   return h("math-tex", null, s);
 }
@@ -226,17 +248,17 @@ function MoreDetail(siav) {
       ])),
       h("tr", null, h("th", { colspan: "2" }, "Weil Polynomial")),
       h("tr", null, h("td", { colspan: "2" }, [
-        h("math-tex", null, `f(x) = ${prettyPolynomial(siav["f"])}`),
-        h("button", { "data-copy": siav["f"], style: "margin-left:10px", onclick: copyButton }, "copy"),
+        h("math-tex", null, `f(x) = ${prettyPolynomial(siav["weil_polynomial"])}`),
+        h("button", { "data-copy": siav["weil_polynomial"], style: "margin-left:10px", onclick: copyButton }, "copy"),
       ])),
       h("tr", null, h("th", { colspan: "2" }, "Real Weil Polynomial")),
-      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, `g(x) = ${prettyPolynomial(siav["h"])}`))),
+      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, `g(x) = ${prettyPolynomial(siav["real_weil_polynomial"])}`))),
       h("tr", null, h("th", { colspan: "2" }, "Dimension")),
-      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, `\\dim A = ${siav["g"]}`))),
+      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, `\\dim A = ${siav["dimension"]}`))),
       h("tr", null, h("th", { colspan: "2" }, "Base Field")),
-      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, siav["a"] == "1" ? `q = p = ${siav["q"]}` : `q = ${siav["q"]} = ${siav["p"]}^{${siav["a"]}}`))),
+      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, siav["base_field_exponent"] == "1" ? `q = p = ${siav["base_field_cardinality"]}` : `q = ${siav["base_field_cardinality"]} = ${siav["base_field_characteristic"]}^{${siav["base_field_exponent"]}}`))),
       h("tr", null, h("th", { colspan: "2" }, "Number of points")),
-      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, `\\#A(\\mathbb{F}_q) = ${siav["n"]}`))),
+      h("tr", null, h("td", { colspan: "2" }, h("math-tex", null, `\\#A(\\mathbb{F}_q) = ${siav["number_of_points"]}`))),
       h("tr", null, h("th", { colspan: "2" }, "Simple")),
       h("tr", null, h("td", { colspan: "2" }, siav["is_simple"] ? "Yes" : "No")),
       h("tr", null, h("th", { colspan: "2" }, "Principally Polarized")),
@@ -256,15 +278,15 @@ function MoreDetail(siav) {
             h("tr", null, h("td", null, h("math-tex", null, `e_{${i + 1}} = ${B["exponent"]}`))),
             h("tr", null, h("th", null, "Weil Polynomial")),
             h("tr", null, h("td", null, [
-              h("math-tex", null, `f_{${i + 1}}(x) = ${prettyPolynomial(B["f"])}`),
-              h("button", { "data-copy": B["f"], style: "margin-left:10px", onclick: copyButton }, "copy"),
+              h("math-tex", null, `f_{${i + 1}}(x) = ${prettyPolynomial(B["weil_polynomial"])}`),
+              h("button", { "data-copy": B["weil_polynomial"], style: "margin-left:10px", onclick: copyButton }, "copy"),
             ])),
             h("tr", null, h("th", null, "Real Weil Polynomial")),
-            h("tr", null, h("td", null, h("math-tex", null, `g_{${i + 1}}(x) = ${prettyPolynomial(B["h"])}`))),
+            h("tr", null, h("td", null, h("math-tex", null, `g_{${i + 1}}(x) = ${prettyPolynomial(B["real_weil_polynomial"])}`))),
             h("tr", null, h("th", null, "Dimension")),
-            h("tr", null, h("td", null, h("math-tex", null, `\\dim B_{${i + 1}} = ${B["g"]}`))),
+            h("tr", null, h("td", null, h("math-tex", null, `\\dim B_{${i + 1}} = ${B["dimension"]}`))),
             h("tr", null, h("th", null, "Number of points")),
-            h("tr", null, h("td", null, h("math-tex", null, `\\#B_{${i + 1}}(\\mathbb{F}_q) = ${B["n"]}`))),
+            h("tr", null, h("td", null, h("math-tex", null, `\\#B_{${i + 1}}(\\mathbb{F}_q) = ${B["number_of_points"]}`))),
             h("tr", null, h("th", null, "Principally Polarized")),
             h("tr", null, h("td", null, B["is_principally_polarized"] ? "Yes" : "No")),
             h("tr", null, h("th", null, "Ordinary")),
@@ -273,13 +295,17 @@ function MoreDetail(siav) {
             h("tr", null, h("td", null, h("math-tex", null, `\\mathrm{Slopes} = [${B["newton_polygon"].join(",")}]`))),
             h("tr", null, h("td", null, NewtonPolygon(B["newton_polygon"]))),
             h("tr", null, h("th", null, "Complex Roots")),
-            h("tr", null, h("td", null, ComplexRoots(B["croots"]))),
+            h("tr", null, h("td", null, h("ul", null, B["complex_roots"].map(z => {
+              const [r, i] = parseComplex(z).map(x => x.toPrecision(10));
+              return h("li", null, `${r} + ${i}i`);
+            })))),
+            h("tr", null, h("td", null, ComplexRoots(B["complex_roots"]))),
             h("tr", null, h("th", null, "CM Field")),
-            h("tr", null, h("td", null, h("math-tex", null, `K = \\mathbb{Q}[x]/(${prettyPolynomial(B["K"])})`))),
-            h("tr", null, h("td", null, h("math-tex", null, `\\Delta_K = ${B["deltaK"]}`))),
+            h("tr", null, h("td", null, h("math-tex", null, `K = \\mathbb{Q}[x]/(${prettyPolynomial(B["cm_field"])})`))),
+            h("tr", null, h("td", null, h("math-tex", null, `\\Delta_K = ${B["cm_field_discriminant"]}`))),
             h("tr", null, h("th", null, "Real Field")),
-            h("tr", null, h("td", null, h("math-tex", null, `K^+ = \\mathbb{Q}[y]/(${prettyPolynomial(B["K+"]).replace(/x/g, "y")})`))),
-            h("tr", null, h("td", null, h("math-tex", null, `\\Delta_{K^+} = ${B["deltaK+"]}`))),
+            h("tr", null, h("td", null, h("math-tex", null, `K^+ = \\mathbb{Q}[y]/(${prettyPolynomial(B["real_field"]).replace(/x/g, "y")})`))),
+            h("tr", null, h("td", null, h("math-tex", null, `\\Delta_{K^+} = ${B["real_field_discriminant"]}`))),
           ]),
         ])
       ),
@@ -288,30 +314,34 @@ function MoreDetail(siav) {
 }
 
 function NewtonPolygon(slopes) {
+  slopes = slopes.map(x => eval(x));
   const n = slopes.length;
+  const m = slopes.reduce((p, n) => p + n, 0);
   const grid = [];
-  for (let i = 0; i <= n; i++)
-    grid.push(h("path", { d: `M -8 ${8 * i} l ${8 * (n + 2)} 0 M ${8 * i} -8 l 0 ${8 * (n + 2)}`, fill: "none", stroke: "rgba(128,128,128,0.3)", "stroke-width": i % 5 === 0 ? 2 : 1, "vector-effect": "non-scaling-stroke" }));
-  return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: `-4 -4 ${8 * n + 8} ${4 * n + 8}`, style: "transform:scaleY(-1);width:100%;height:100%" }, [
+  for (let i = 0; i <= 10; i++)
+    grid.push(h("path", {
+      d: ` M -1 ${i} l ${12} 0 M ${i} -1 l 0 ${12}`,
+      fill: "none", stroke: "rgba(128,128,128,0.3)", "stroke-width": i === 0 ? 2 : 0.5, "vector-effect": "non-scaling-stroke"
+    }));
+  return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: `-0.5 -0.5 ${n + 1} ${m + 1}`, style: "transform:scaleY(-1);width:100%;height:100%" }, [
     ...grid,
-    h("path", { d: `M 0 ${4 * n} ` + slopes.map(s => `l 8 -${8 * eval(s)}`).join(" "), fill: "none", stroke: "blue", "stroke-width": 5, "vector-effect": "non-scaling-stroke", "stroke-linecap": "round", "stroke-linejoin": "round" }),
+    h("path", { d: `M 0 ${m} ` + slopes.map(x => `l 1 -${x}`).join(" "), fill: "none", stroke: "blue", "stroke-width": 5, "vector-effect": "non-scaling-stroke", "stroke-linecap": "round", "stroke-linejoin": "round" }),
   ]);
 }
 
 function ComplexRoots(croots) {
-  console.log("croots = ", croots)
-  // ["-1.41421356237310*I", "1.41421356237310*I"]
   const points = croots.map(z => {
-    const m = /([-+]?[\d\.]+)\s?([+-]\s?[\d\.]+)?/.exec(z);
-    return m[2] ? [eval(m[1]), eval(m[2])] : [0, eval(m[1])];
-  })
-  const r = Math.sqrt(points[0][0] ** 2 + points[0][1] ** 2);
+    const [x0, y0] = parseComplex(z);
+    const r = x0.mul(x0).add(y0.mul(y0)).sqrt();
+    const [x, y] = [x0.div(r), y0.div(r)];
+    return [x.round(10).toPrecision(10), y.round(10).toPrecision(10)];
+  });
   const grid = [];
   for (let i = -1; i <= 1; i++)
     grid.push(h("path", { d: `M -2 ${i} l 4 0 M ${i} -2 l 0 4`, fill: "none", stroke: "rgba(128,128,128,0.3)", "stroke-width": i % 5 === 0 ? 2 : 0.5, "vector-effect": "non-scaling-stroke" }));
   return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: `-1.5 -1.5 3 3`, style: "transform:scaleY(-1);width:100%;height:100%" }, [
     ...grid,
-    ...points.map(([x, y]) => h("circle", { cx: x / r, cy: y / r, r: 0.1, fill: "blue" }))
+    ...points.map(([x, y]) => h("circle", { cx: x, cy: y, r: 0.1, fill: "blue" }))
   ]);
 
 }
@@ -326,4 +356,24 @@ function copyButton(e) {
 
 function prettyPolynomial(p) {
   return p.replace(/\*/g, "").replace(/\^(\d+)/g, "^{$1}")
+}
+
+function parseComplex(z) {
+  const arr = z.split(" ");
+  let [real, imag] = ["0", "0"];
+  switch (arr.length) {
+    case 1:
+      if (arr[0].includes("*I")) imag = arr[0];
+      else real = arr[0];
+      break;
+    case 3:
+      real = arr[0];
+      imag = (arr[1] == "-" ? "-" : "") + arr[2].substr(0, arr[2].length - 2);
+      break;
+    default:
+      console.error("arr = ");
+      console.error(arr);
+      throw new Error(`unable to parse complex number: ${z}`);
+  }
+  return [new Big(real), new Big(imag)];
 }

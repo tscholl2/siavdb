@@ -5,17 +5,17 @@ from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 load("siav.sage")
 
-MAX_WORKERS = 32
+MAX_WORKERS = 2
 
 # load previously generated stuff
 R.<x> = ZZ[]
 try:
-    with open("../siav-list.json") as f:
+    with open("siav-list.json") as f:
         DATA = process_map(
                 SIAV,
                 [R(v["weil_polynomial"]) for v in json.load(f).values()],
                 #[],
-                chunksize=32,
+                chunksize=8,
                 max_workers=MAX_WORKERS,
                 desc="loading",
             )
@@ -41,8 +41,8 @@ def foo(K):
 for alpha in tqdm([
     w for W in process_map(
         foo,
-        [K for g in [2,4,6,8] for K in CM_FIELDS[g]],
-        #[],
+        #[K for g in [2,4,6,8] for K in CM_FIELDS[g]],
+        [],
         chunksize=4,
         max_workers=MAX_WORKERS,
         desc="wg simple",
@@ -58,8 +58,8 @@ for alpha in tqdm([
         continue
 
 # search for other products
-simple = [A.components[0][0] for A in DATA if A.is_simple]
-#simple = []
+#simple = [A.components[0][0] for A in DATA if A.is_simple]
+simple = []
 edges = set()
 for A,B in tqdm(
     ((A,B) for i,A in enumerate(simple) for B in simple[i+1:]),

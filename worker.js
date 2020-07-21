@@ -10,7 +10,7 @@ self.onmessage = async function (e) {
 };
 
 async function start() {
-  const response = await fetch("siav-list.small.json");
+  const response = await fetch("siav-list.json");
   const data = await response.json();
   await new Promise(resolve => setTimeout(resolve, 500));
   for (let A of Object.values(data))
@@ -24,7 +24,7 @@ function addCurves() {
   for (let i = 0; i < 100; i++) {
     const q = BigIntMath.max.apply(
       null,
-      DB.filter(A => A["g"] === "1").map(A => BigInt(A["q"]))
+      DB.filter(A => A["dimension"] === "1").map(A => BigInt(A["base_field_cardinality"]))
     );
     const arr = nextSIEC(q + 1n);
     for (let A of arr) {
@@ -62,22 +62,22 @@ function query(parameters = {}) {
 }
 
 function siavComparator(a, b) {
-  if (BigInt(a["g"]) < BigInt(b["g"])) {
+  if (BigInt(a["dimension"]) < BigInt(b["dimension"])) {
     return -1;
   }
-  if (BigInt(a["g"]) > BigInt(b["g"])) {
+  if (BigInt(a["dimension"]) > BigInt(b["dimension"])) {
     return 1;
   }
-  if (BigInt(a["q"]) < BigInt(b["q"])) {
+  if (BigInt(a["base_field_cardinality"]) < BigInt(b["base_field_cardinality"])) {
     return -1;
   }
-  if (BigInt(a["q"]) > BigInt(b["q"])) {
+  if (BigInt(a["base_field_cardinality"]) > BigInt(b["base_field_cardinality"])) {
     return 1;
   }
-  if (a["f"] < b["f"]) {
+  if (a["weil_polynomial"] < b["weil_polynomial"]) {
     return -1;
   }
-  if (a["f"] > b["f"]) {
+  if (a["weil_polynomial"] > b["weil_polynomial"]) {
     return 1;
   }
   return 0;
