@@ -1,7 +1,6 @@
 import { patch, h } from "./imports.js";
 import { Controller } from "./imports.js";
 import { Big } from "./big.js";
-console.log(Big)
 
 document.addEventListener("DOMContentLoaded", start);
 
@@ -363,7 +362,7 @@ function parseComplex(z) {
   let [real, imag] = ["0", "0"];
   switch (arr.length) {
     case 1:
-      if (arr[0].includes("*I")) imag = arr[0];
+      if (arr[0].includes("*I")) imag = arr[0].substr(0, arr[0].length - 2);
       else real = arr[0];
       break;
     case 3:
