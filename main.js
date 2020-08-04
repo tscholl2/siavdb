@@ -5,11 +5,11 @@ import { Big } from "./big.js";
 document.addEventListener("DOMContentLoaded", start);
 
 const w = new Worker("worker.js");
-w.onmessage = e =>
-  dispatchEvent(new CustomEvent(e.data[0], { detail: e.data }));
+w.onmessage = e => dispatchEvent(new CustomEvent(e.data[0], { detail: e.data }));
+
 function callWorker(name, ...args) {
   return new Promise(resolve => {
-    const id = `${Math.random()}`;
+    const id = callWorker.i = 1 + (callWorker.i || 0);
     const l = e => {
       removeEventListener(id, l);
       resolve(e.detail[1]);
@@ -63,7 +63,7 @@ function App(dispatch) {
     const limit = data.length;
     return h("div", null, [
       h("h1", null, "Super-Isolated Abelian Varieties"),
-      h(Search, { onsubmit: submitSearch, values: search }),
+      Search({ onsubmit: submitSearch, values: search }),
       isLoading
         ? Loading()
         : total === 0
@@ -93,13 +93,13 @@ function App(dispatch) {
                           style: "cursor:pointer;border:1px solid blue;padding:5px;display:inline-block;",
                           onclick: () => dispatch(s => ({ ...s, detail: detail === siav["id"] ? undefined : siav["id"] })),
                         },
-                        h(LessDetail, siav)
+                        LessDetail(siav)
                       ),
                       detail === siav["id"] &&
                       h(
                         "div",
                         { key: "details", style: "margin-top: 10px;" },
-                        h(MoreDetail, siav)
+                        MoreDetail(siav)
                       )
                     ]
                   )
@@ -194,6 +194,11 @@ function Search({ values, onsubmit }) {
         h("label", null, [
           h("math-tex", null, "\\# A(\\mathbb{F}_q) = "), " ",
           h("input", { name: "number_of_points", type: "text", placeholder: "15", pattern: "\\d+", value: values["n"] }),
+        ]),
+        h("br"),
+        h("label", null, [
+          "Number of Components",
+          h("input", { name: "components.length", type: "text", placeholder: "2", pattern: "\\d+", value: values["components.length"] }),
         ]),
         h("br"),
         h("label", null, [

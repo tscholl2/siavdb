@@ -1,12 +1,27 @@
 // https://gist.github.com/tscholl2/4de700ff933d8226fb8b56964547fffe#file-controller-min-js
-export const Controller = eval(
-  `(function(){return f;function f(t){var n=this;this.p=[],this.l=[],this.getState=function(){return n.s},this.addPlugin=function(t){n.p.push(t)},this.removePlugin=function(t){n.p=n.p.filter(function(n){return n!==t})},this.addListener=function(t){n.l.push(t)},this.removeListener=function(t){n.l=n.l.filter(function(n){return n!==t})},this.dispatch=function(t){n.p.forEach(function(n){return t=n(t)});var i=t(n.s);n.s!==i&&(n.s=i,n.l.forEach(function(t){return t(n.s,n.dispatch)}))},this.s=t};})()`
-);
-// https://unpkg.com/superfine@7.0.0/src/index.js
-// export { patch, h } from "https://unpkg.com/superfine@7.0.0/src/index.js";
-export const { h, patch } = eval(
-  `(function(a,b){b(a);return a})({},function(p){var h={},g=[],b=g.map,j=Array.isArray,y=function(a){this.handlers[a.type](a)},x=function(d,i,f,c,a){"key"===i||("o"===i[0]&&"n"===i[1]?((d.handlers||(d.handlers={}))[(i=i.slice(2).toLowerCase())]=c)?f||d.addEventListener(i,y):d.removeEventListener(i,y):!a&&"list"!==i&&i in d?(d[i]=null==c?"":c):null==c||!1===c?d.removeAttribute(i):d.setAttribute(i,c))},k=function(i,A){var u=3===i.type?document.createTextNode(i.name):(A=A||"svg"===i.name)?document.createElementNS("http://www.w3.org/2000/svg",i.name):document.createElement(i.name),f=i.props;for(var a in f){x(u,a,null,f[a],A)}for(var c=0,s=i.children.length;c<s;c++){u.appendChild(k(i.children[c],A))}return(i.node=u)},q=function(a){return null==a?null:a.key},m=function(O,H,G,E,J){if(G===E){}else{if(null!=G&&3===G.type&&3===E.type){G.name!==E.name&&(H.nodeValue=E.name)}else{if(null==G||G.name!==E.name){(H=O.insertBefore(k(E,J),H)),null!=G&&O.removeChild(G.node)}else{var A,R,B,P,F=G.props,L=E.props,I=G.children,u=E.children,f=0,M=0,D=I.length-1,K=u.length-1;for(var i in ((J=J||"svg"===E.name),(function(c,s){var l={};for(var a in c){l[a]=c[a]}for(var a in s){l[a]=s[a]}return l})(F,L))){("value"===i||"selected"===i||"checked"===i?H[i]:F[i])!==L[i]&&x(H,i,F[i],L[i],J)}for(;M<=K&&f<=D&&null!=(B=q(I[f]))&&B===q(u[M]);){m(H,I[f].node,I[f++],u[M++],J)}for(;M<=K&&f<=D&&null!=(B=q(I[D]))&&B===q(u[K]);){m(H,I[D].node,I[D--],u[K--],J)}if(f>D){for(;M<=K;){H.insertBefore(k(u[M++],J),(R=I[f])&&R.node)}}else{if(M>K){for(;f<=D;){H.removeChild(I[f++].node)}}else{i=f;for(var d={},Q={};i<=D;i++){null!=(B=I[i].key)&&(d[B]=I[i])}for(;M<=K;){(B=q((R=I[f]))),(P=q(u[M])),Q[B]||(null!=P&&P===q(I[f+1]))?(null==B&&H.removeChild(R.node),f++):null==P||1===G.type?(null==B&&(m(H,R&&R.node,R,u[M],J),M++),f++):(B===P?(m(H,R.node,R,u[M],J),(Q[P]=!0),f++):null!=(A=d[P])?(m(H,H.insertBefore(A.node,R&&R.node),A,u[M],J),(Q[P]=!0)):m(H,R&&R.node,null,u[M],J),M++)}for(;f<=D;){null==q((R=I[f++]))&&H.removeChild(R.node)}for(var i in d){null==Q[i]&&H.removeChild(d[i].node)}}}}}}return(E.node=H)},w=function(f,s,i,d,a,c){return{name:f,props:s,children:i,node:d,type:c,key:a}},z=function(c,a){return w(c,h,g,a,null,3)},v=function(a){return 3===a.nodeType?z(a.nodeValue,a):w(a.nodeName.toLowerCase(),h,b.call(a.childNodes,v),a,null,1)};(p.h=function(l,n){for(var f,d=[],a=[],c=arguments.length;c-->2;){d.push(arguments[c])}for(;d.length>0;){if(j((f=d.pop()))){for(c=f.length;c-->0;){d.push(f[c])}}else{!1===f||!0===f||null==f||a.push("object"==typeof f?f:z(f))}}return((n=n||h),"function"==typeof l?l(n,a):w(l,n,a,null,n.key))}),(p.patch=function(a,c){return((a=m(a.parentNode,a,a.vdom||v(a),c)).vdom=c),a})});`
-);
+export const Controller = eval(`
+(function(){return f;function f(t){var n=this;this.p=[],this.l=[],this.getState=function(){return n.s},this.addPlugin=function(t){n.p.push(t)},this.removePlugin=function(t){n.p=n.p.filter(function(n){return n!==t})},this.addListener=function(t){n.l.push(t)},this.removeListener=function(t){n.l=n.l.filter(function(n){return n!==t})},this.dispatch=function(t){n.p.forEach(function(n){return t=n(t)});var i=t(n.s);n.s!==i&&(n.s=i,n.l.forEach(function(t){return t(n.s,n.dispatch)}))},this.s=t};})()
+`);
+
+//import * as SS from "https://unpkg.com/superfine@8.0.10/superfine.js";
+const SS = eval(`
+(()=>{var e={},l=[],t=e=>null==e?e:e.key,r=function(e){this.tag[e.type](e)},o=(e,l,t,o,n)=>{"key"===l||("o"===l[0]&&"n"===l[1]?((e.tag||(e.tag={}))[l=l.slice(2)]=o)?t||e.addEventListener(l,r):e.removeEventListener(l,r):!n&&"list"!==l&&"form"!==l&&l in e?e[l]=null==o?"":o:null==o||!1===o?e.removeAttribute(l):e.setAttribute(l,o))},n=(e,l)=>{var t=e.props,r=3===e.tag?document.createTextNode(e.type):(l=l||"svg"===e.type)?document.createElementNS("http://www.w3.org/2000/svg",e.type,{is:t.is}):document.createElement(e.type,{is:t.is});for(var d in t)o(r,d,null,t[d],l);return e.children.map(e=>r.appendChild(n(e=i(e),l))),e.dom=r},d=(e,l,r,a,u)=>{if(r===a);else if(null!=r&&3===r.tag&&3===a.tag)r.type!==a.type&&(l.nodeValue=a.type);else if(null==r||r.type!==a.type)l=e.insertBefore(n(a=i(a),u),l),null!=r&&e.removeChild(r.dom);else{var m,p,s,v,f=r.props,y=a.props,c=r.children,h=a.children,g=0,x=0,C=c.length-1,k=h.length-1;for(var w in u=u||"svg"===a.type,{...f,...y})("value"===w||"selected"===w||"checked"===w?l[w]:f[w])!==y[w]&&o(l,w,f[w],y[w],u);for(;x<=k&&g<=C&&null!=(s=t(c[g]))&&s===t(h[x]);)d(l,c[g].dom,c[g++],h[x]=i(h[x++]),u);for(;x<=k&&g<=C&&null!=(s=t(c[C]))&&s===t(h[k]);)d(l,c[C].dom,c[C--],h[k]=i(h[k--]),u);if(g>C)for(;x<=k;)l.insertBefore(n(h[x]=i(h[x++]),u),(p=c[g])&&p.dom);else if(x>k)for(;g<=C;)l.removeChild(c[g++].dom);else{var N={},A={};for(w=g;w<=C;w++)null!=(s=c[w].key)&&(N[s]=c[w]);for(;x<=k;)s=t(p=c[g]),v=t(h[x]=i(h[x])),A[s]||null!=v&&v===t(c[g+1])?(null==s&&l.removeChild(p.dom),g++):null==v||1===r.tag?(null==s&&(d(l,p&&p.dom,p,h[x],u),x++),g++):(s===v?(d(l,p.dom,p,h[x],u),A[v]=!0,g++):null!=(m=N[v])?(d(l,l.insertBefore(m.dom,p&&p.dom),m,h[x],u),A[v]=!0):d(l,p&&p.dom,null,h[x],u),x++);for(;g<=C;)null==t(p=c[g++])&&l.removeChild(p.dom);for(var w in N)null==A[w]&&l.removeChild(N[w].dom)}}return a.dom=l},i=e=>!0!==e&&!1!==e&&e?e:text(""),a=t=>3===t.nodeType?text(t.nodeValue,t):u(t.nodeName.toLowerCase(),e,l.map.call(t.childNodes,a),t,null,1),u=(e,l,t,r,o,n)=>({type:e,props:l,children:t,dom:r,key:o,tag:n});var text=(t,r)=>u(t,e,l,r,null,3);var h=(e,t,r)=>u(e,t,Array.isArray(r)?r:null==r?l:[r],null,t.key);var patch=(e,l)=>((e=d(e.parentNode,e,e.v||a(e),l)).v=l,e); return {h,text,patch};})()
+`);
+
+export const { patch } = SS;
+
+const empty_obj = {};
+const empty_arr = [];
+export function h(tag, props, children) {
+  if (props == null)
+    props = empty_obj;
+  if (!children)
+    children = empty_arr;
+  else if (!Array.isArray(children))
+    children = [children];
+  children = children.flat().filter(c => c).map(c => typeof (c) === "string" ? SS.text(c) : c);
+  return SS.h(tag, props, children);
+}
 
 import * as _ from "https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.js";
 // https://github.com/justinfagnani/katex-elements/blob/master/katex-inline.js

@@ -43,7 +43,7 @@ function query(parameters = {}) {
   for (let siav of DB) {
     let ok = true;
     for (let [k, q] of Object.entries(parameters)) {
-      const v = siav[k];
+      const v = k.split(".").reduce((p, n) => p[n], siav);
       if ((typeof (q) === "function" && !q(siav)) || (v != null && `${q}` != `${v}`)) {
         ok = false;
         break;
