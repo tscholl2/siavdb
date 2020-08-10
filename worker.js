@@ -1,4 +1,8 @@
 importScripts("math.js", "siec.js");
+const { decompress } = eval(`
+(()=>{const t=String.fromCodePoint,e="length";return{compress:function(o){const r=[],n=new Map;for(let e=0;e<256;e++)n.set(t(e),e);let s="",c="",l="";for(let e of o)l=s+(c=t(e)),n.has(l)?s=l:(r.push(n.set(l,n.size).get(s)),s=c);return r.push(n.get(s)),(t=>{const o=t.reduce((t=0,e)=>e>t?e:t),r=1+Math.floor(Math.log2(o)),n=new Uint8Array(5+Math.ceil(t[e]*r/8));n[0]=r;for(let o=0;o<4;o++)n[1+o]=t[e]>>8*o&255;for(let o=0;o<t[e];o++)for(let e=0;e<r;e++){const s=40+(o*r+e);n[s>>3]|=(1<<s%8)*(t[o]>>e&1)}return n})(r)},decompress:function(o){const r=(t=>{const o=t[0],r=t.slice(1,5).reverse().reduce((t,e)=>t<<8|e,0),n=new Uint32Array(r);for(let r=0;r<t[e];r++)for(let e=0;e<o;e++){const s=40+(r*o+e);n[r]|=(1<<e)*(t[s>>3]>>s%8&1)}return n})(o),n=[];for(let e=0;e<256;e++)n.push(t(e));let s=n[r[0]],c="";const l=[s];for(let t of r.slice(1))l.push(c=t<n[e]?n[t]:s+s[0]),n.push(s+c[0]),s=c;const f=[];for(let t of l.join(""))f.push(t.codePointAt(0));return new Uint8Array(f)}}})();
+`)
+
 const DB = [];
 
 const methods = { query, addCurves, start };
@@ -10,8 +14,12 @@ self.onmessage = async function (e) {
 };
 
 async function start() {
-  const response = await fetch("siav-list.small.json");
-  const data = await response.json();
+  const response = await fetch("siav-list.json.lzw");
+  const blob = await response.blob();
+  const buffer = await blob.arrayBuffer();
+  const compressed = new Uint8Array(buffer);
+  const decompressed = decompress(compressed);
+  const data = JSON.parse(new TextDecoder().decode(decompressed));
   await new Promise(resolve => setTimeout(resolve, 500));
   for (let A of Object.values(data))
     DB.push(A);

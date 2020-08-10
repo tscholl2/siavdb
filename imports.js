@@ -17,9 +17,11 @@ export function h(tag, props, children) {
     props = empty_obj;
   if (!children)
     children = empty_arr;
-  else if (!Array.isArray(children))
-    children = [children];
-  children = children.flat().filter(c => c).map(c => typeof (c) === "string" ? SS.text(c) : c);
+  else
+    children = (!Array.isArray(children) ? [children] : children)
+      .flat()
+      .filter(c => c)
+      .map(c => typeof (c) === "string" ? SS.text(c) : c);
   return SS.h(tag, props, children);
 }
 
