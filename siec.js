@@ -1,49 +1,4 @@
 /**
- * Given a string and encoding method,
- * return the encoding as a Uint8Array.
- * 
- * # Python equivalent:
- * python -c 'print([x for x in "a🐦".encode("utf8")])'
- * [97, 240, 159, 144, 166]
- * python -c 'print([x for x in "$€𐐷𤭢".encode("utf8")])'
- * [36, 226, 130, 172, 240, 144, 144, 183, 240, 164, 173, 162]
- * python -c 'print([x for x in "$€𐐷𤭢".encode("utf-16-le")])'
- * [36, 0, 172, 32, 1, 216, 55, 220, 82, 216, 98, 223]
- * 
- * @param {string} encoding (utf8,utf16le)
- */
-String.prototype.encode = function (encoding = "utf8") {
-  const s = this;
-  if (encoding === "utf8") {
-    const enc = new Array();
-    for (let y of [...s].map(c => c.codePointAt())) {
-      if (y < 0x80)
-        enc.push(y);
-      else {
-        const ebytes = Math.ceil(y.toString(2).length / 5);
-        enc.push((((1 << ebytes + 1) - 2) << 7 - ebytes) | (y >> 6 * (ebytes - 1)))
-        for (let i = ebytes - 2; i >= 0; i--)
-          enc.push(0x80 | (y >> i * 6) & 0x3f);
-      }
-    }
-    return new Uint8Array(enc);
-  }
-  if (encoding === "utf16le") {
-    return new Uint8Array([...s]
-      .map(c => c.codePointAt())
-      .map(y =>
-        (y > 0xffff
-          ? [((y - 0x10000) >> 10) | 0xD800, ((y - 0x10000) & 0x3ff) | 0xDC00]
-          : [y])
-          .map(y => [y & 255, y >> 8]))
-      .flat(2));
-  }
-  else {
-    throw new Error(`unknown encoding ${encoding}`);
-  }
-}
-
-/**
  * Given a sting s, return the SHA-256 digest of s
  * (encoded as a UTF-8 byte array) in hex form.
  * @param {string} s
@@ -57,7 +12,7 @@ String.prototype.encode = function (encoding = "utf8") {
  */
 async function sha256(s) {
   return Array.prototype.map.call(
-    new Uint8Array(await window.crypto.subtle.digest("sha-256", s.encode("utf8"))),
+    new Uint8Array(await window.crypto.subtle.digest("sha-256", new TextEncoder("utf-8").encode(s))),
     x => x.toString(16).padStart(2, "0")
   ).join('');
 }
