@@ -23,6 +23,16 @@ async function start() {
   const c = new Controller({});
   const app = App(c.dispatch);
   c.addListener(s => patch(document.getElementById("app"), app(s)));
+  c.addListener(s => window.location.hash = encodeURIComponent(JSON.stringify(s)));
+  if (window.location.hash) {
+    try {
+      const urlState = JSON.parse(decodeURIComponent(window.location.hash.substr(1)));
+      c.dispatch(s => ({ ...s, ...urlState }));
+    } catch (e) {
+      console.error("unable to read url state");
+      console.error(e);
+    }
+  }
   c.dispatch(s => ({ ...s, intializing: true }));
   await callWorker("start");
   const { results, ...resp } = await callWorker("query", c.getState().search || {});
